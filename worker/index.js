@@ -293,13 +293,14 @@ const HTML = String.raw`<!doctype html>
 header{height:66px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 31px;background:#ffffff}.toolbar{display:flex;align-items:center;gap:9px}.crumb{color:var(--muted);font-size:13px}main{padding:30px 32px 50px;max-width:1440px;margin:auto}.hero{border:1px solid #cfdfd4;border-radius:15px;background:linear-gradient(104deg,#e5f2e8,#eff7f0 60%,#dfede4);padding:28px;display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:20px;position:relative;overflow:hidden}.hero>*{z-index:1}.hero:after{content:"";position:absolute;inset:0 0 0 67%;opacity:.24;background:radial-gradient(#749782 1px,transparent 1px) 0 0 / 13px 13px;mask-image:linear-gradient(90deg,transparent,#000)}.hero .eyebrow{color:var(--lime)}h1,h2,h3,p{margin:0}h1{font-size:clamp(29px,4vw,46px);letter-spacing:-.055em;line-height:1.06;margin-bottom:10px}h2{font-size:18px;letter-spacing:-.035em}h3{font-size:14px}.sub,.muted{color:var(--muted)}.sub{line-height:1.65}.page-title{margin:0 0 20px}.page-title h1{font-size:36px}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:19px}.stat,.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px}.stat{padding:15px}.stat strong{font:500 26px var(--mono);display:block;margin:8px 0 3px}.stat em{font:normal 11px var(--mono);color:var(--muted)}.columns{display:grid;grid-template-columns:1.55fr 1fr;gap:14px;margin-bottom:17px}.panel{padding:17px;margin-bottom:13px}.columns>.panel{margin:0}.panel-head,.row,.actions{display:flex;align-items:center;justify-content:space-between;gap:12px}.panel-head{margin-bottom:13px}.row{padding:12px 0;border-top:1px solid var(--border)}.row>div{min-width:0;overflow-wrap:anywhere}.row p{margin-top:4px}.empty{padding:14px;border:1px dashed #bccdc1;border-radius:8px;color:var(--muted);line-height:1.5}.btn,select{border:1px solid #cbd9d0;border-radius:8px;background:#f4f8f5;color:var(--text);padding:9px 12px;text-decoration:none;font-size:13px;font-weight:800;display:inline-block}.btn.primary{background:var(--lime);color:#ffffff;border-color:var(--lime)}.btn:disabled{opacity:.55;cursor:wait}.pill{font:500 11px var(--mono);white-space:nowrap;color:var(--lime);background:#e6f2e9;padding:5px 8px;border-radius:6px}.pill.warn{color:var(--warn);background:#fff0da}.stack{display:grid;gap:11px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}label{display:grid;gap:6px;font-size:13px;font-weight:700}input,textarea{width:100%;padding:10px 11px;background:#f8fbf9;border:1px solid #becec3;border-radius:7px;color:var(--text)}textarea{min-height:92px;resize:vertical}.actions{justify-content:flex-start;flex-wrap:wrap;margin-top:12px}.message{min-height:20px;color:var(--warn);margin-bottom:9px}.message:empty{display:none}dialog{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:13px;width:min(490px,93vw);padding:23px}dialog::backdrop{background:#172e2466}pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:10px;background:#f8fbf9;border-radius:7px;color:#334e3f;max-height:280px;overflow:auto}.toolbar select{max-width:185px}small{color:var(--muted)}.small{font-size:12px}.quiet{color:var(--muted)}.module{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.module .panel{margin:0}.module p{margin:8px 0;line-height:1.5}details{border-top:1px solid var(--border);padding:12px 0}summary{cursor:pointer}
 @media(max-width:960px){.shell{grid-template-columns:185px minmax(0,1fr)}main{padding:23px 19px}header{padding:0 19px}.columns{grid-template-columns:1fr}}@media(max-width:700px){.shell{display:block}aside{padding:12px;gap:9px;border-right:0;border-bottom:1px solid var(--border)}.nav{display:flex;overflow:auto}.nav button{white-space:nowrap}.nav-title,.sidebar-foot{display:none}header{padding:0 12px;height:55px}.crumb{display:none}.toolbar{width:100%;justify-content:space-between}main{padding:17px 12px}.hero{padding:19px;align-items:flex-start;flex-direction:column}.stats,.module{grid-template-columns:repeat(2,minmax(0,1fr))}.form-grid{grid-template-columns:1fr}}
 .table-scroll{overflow:auto;margin-top:12px}table{width:100%;min-width:590px;border-collapse:collapse;text-align:left}th{font-size:12px;color:var(--muted);background:#f0f6f1}th,td{padding:10px;border-bottom:1px solid var(--border);vertical-align:top}td:first-child{min-width:220px;overflow-wrap:anywhere}td .btn{white-space:nowrap}.serp{background:#f8fbf9;border:1px solid var(--border);border-radius:8px;padding:14px;overflow-wrap:anywhere}.serp h3{color:#224ea3;font-size:17px;margin:4px 0}.serp p{color:var(--muted)}.stack+details{margin-top:10px}#crawl-progress{margin-top:10px}
+.nav-group{display:grid;gap:3px;margin-bottom:12px}.nav-group .nav-title{margin:6px 0 4px}.switches{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.trend{display:block;width:100%;max-height:175px}.period{margin:10px 0}.panel details:first-child{border-top:0;padding-top:0}.panel details form{margin-top:12px}@media(max-width:700px){.nav-group{display:contents}}
 </style></head><body>
-<div class="shell"><aside><div class="brand"><span class="mark" aria-hidden="true">↗</span>SEO Mərkəzi</div><div><p class="nav-title">İdarəetmə</p><nav class="nav" aria-label="Bölmələr" id="nav"></nav></div><div class="sidebar-foot"><span class="dot"></span>Şəxsi iş sahəsi</div></aside>
+<div class="shell"><aside><div class="brand"><span class="mark" aria-hidden="true">↗</span>SEO Mərkəzi</div><div><nav class="nav" aria-label="Bölmələr" id="nav"></nav></div><div class="sidebar-foot"><span class="dot"></span>Şəxsi iş sahəsi</div></aside>
 <div><header><span class="crumb">İş sahəsi / <b id="crumb">İcmal</b></span><div class="toolbar"><select id="sites" aria-label="Sayt seç"></select><button class="btn" id="add">＋ Sayt əlavə et</button></div></header><main><div id="message" class="message" role="status" aria-live="polite"></div><div id="view"><p class="muted">Panel açılır…</p></div></main></div></div>
 <dialog id="dialog"><form id="site-form" class="stack"><h2>Yeni sayt</h2><label>Saytın adı<input name="name" maxlength="90" required placeholder="Məsələn, Yemek Market"></label><label>Domen<input name="url" required placeholder="https://example.com"></label><div class="actions"><button class="btn primary">Saytı əlavə et</button><button class="btn" type="button" id="cancel">Ləğv et</button></div><p id="site-error" class="message" role="status"></p></form></dialog>
 <script>
 const $=id=>document.getElementById(id);
-const sections=[["home","◫","İcmal"],["audit","◎","Texniki audit"],["pages","▤","Səhifələr"],["geo","✦","AI görünürlüyü"],["content","◇","Kontent və açar sözlər"],["compare","⇄","Domen müqayisəsi"],["reports","↗","Hesabatlar"],["settings","⚙","Bağlantılar"]];
+const sections=[["home","◫","İcmal"],["audit","◎","Texniki audit"],["pages","▤","Səhifələr"],["geo","✦","AI görünürlüyü"],["organic","↗","Üzvi axtarış"],["gap","⇆","Açar söz fərqi"],["backlinks","↪","Backlink analizi"],["content","◇","Kontent və açar sözlər"],["compare","⇄","Domen müqayisəsi"],["reports","↗","Hesabatlar"],["settings","⚙","Bağlantılar"]];
 let state, revision, active=localStorage.getItem("seo-site")||"bubora", tab="home", chosen="";
 let saving=false;
 const esc=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -325,17 +326,17 @@ function render(){
   if(!state)return;
   $("sites").innerHTML='<option value="all">Bütün saytlar</option>'+state.sites.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>').join("");
   $("sites").value=active;
-  $("nav").innerHTML=sections.map(([id,icon,label])=>'<button type="button" data-tab="'+id+'" '+(tab===id?'aria-current="page"':'')+'><span class="icon" aria-hidden="true">'+icon+'</span>'+label+'</button>').join("");
+  $("nav").innerHTML=[["Layihə",["home","audit","pages","geo"]],["Araşdırma",["organic","gap","backlinks","content","compare"]],["İdarəetmə",["reports","settings"]]].map(([group,ids])=>'<div class="nav-group"><p class="nav-title">'+group+'</p>'+sections.filter(section=>ids.includes(section[0])).map(([id,icon,label])=>'<button type="button" data-tab="'+id+'" '+(tab===id?'aria-current="page"':'')+'><span class="icon" aria-hidden="true">'+icon+'</span>'+label+'</button>').join("")+'</div>').join("");
   $("crumb").textContent=sections.find(s=>s[0]===tab)[2];
   const s=site();
   if(!s){$("view").innerHTML=title("Bütün saytlar","Auditlərə, SEO qaralamalarına və AI sorğularına ümumi baxış.")+'<div class="module">'+state.sites.map(x=>'<article class="panel"><h2>'+esc(x.name)+'</h2><p class="muted">'+esc(x.url)+'</p><p>'+x.pages.length+' SEO qaralaması · '+x.queries.length+' GEO sorğusu</p><p class="muted">'+(x.audit?'Son audit '+date(x.audit.date):'Audit gözlənilir')+'</p><button class="btn" data-site="'+esc(x.id)+'">İş sahəsini aç →</button></article>').join("")+'</div>';return}
-  $("view").innerHTML=({home,audit:audits,pages,geo,content,compare:comparison,reports,settings})[tab](s);
+  $("view").innerHTML=({home,audit:audits,pages,geo,organic,gap:keywordGap,backlinks,content,compare:comparison,reports,settings})[tab](s);
 }
 function home(s){
   const ok=s.audit?.checks.filter(c=>c[1]).length;
   const rows=s.audit?.checks.filter(c=>!c[1]).slice(0,4);
   return '<section class="hero"><div><p class="eyebrow">Saytın icmalı</p><h1>'+esc(s.name)+'</h1><a class="sub" href="'+esc(s.url)+'" target="_blank" rel="noopener noreferrer">'+esc(new URL(s.url).hostname)+' ↗</a></div><button class="btn primary" data-tab="audit">Texniki auditi aç →</button></section>'+
-  '<div class="stats">'+stat("Audit yoxlamaları",s.audit?ok+"/"+s.audit.checks.length:"—",s.audit?"tamamlanan":"audit gözlənilir")+stat("Yoxlanılan URL",s.crawl?.pages.length??"—","sayt auditi")+stat("AI sorğuları",s.queries.length,"izləmə siyahısı")+stat("Üzvi kliklər","—","Search Console qoşulmayıb")+'</div>'+
+  '<div class="stats">'+stat("Audit yoxlamaları",s.audit?ok+"/"+s.audit.checks.length:"—",s.audit?"tamamlanan":"audit gözlənilir")+stat("Yoxlanılan URL",s.crawl?.pages.length??"—","sayt auditi")+stat("AI sorğuları",s.queries.length,"izləmə siyahısı")+stat("Üzvi kliklər",s.searchData?.dates?.current?num(sumSearch(s.searchData.dates.current.rows).clicks):"—",s.searchData?.dates?.current?esc(s.searchData.dates.current.period):"Tarix CSV-si gözlənilir")+'</div>'+
   '<div class="columns"><section class="panel"><div class="panel-head"><h2>Audit nəticələri</h2><button class="btn" data-tab="audit">Audit →</button></div>'+
   (rows?.length?rows.map(c=>'<div class="row"><div><h3>'+esc(c[0])+'</h3><p class="muted small">'+esc(c[2])+'</p></div><span class="pill warn">Yoxla</span></div>').join(""):empty(s.audit?"Son auditdə əlavə yoxlama işarələnmədi.":"Saytın başlıq, indeks direktivləri, robots.txt və sitemap vəziyyətini yoxlamaq üçün audit başlat."))+
   '</section><section class="panel"><div class="panel-head"><h2>AI görünürlüyü</h2><button class="btn" data-tab="geo">Sorğular →</button></div>'+
@@ -491,11 +492,182 @@ function geo(s){
   (s.queries.length?s.queries.map(q=>'<details><summary><strong>'+esc(q.question)+'</strong> · <span class="muted">'+esc(q.platform)+'</span></summary><form class="stack geo-result" data-query="'+esc(q.id)+'"><div class="form-grid"><label>Marka adı çəkildi?<select name="mentioned">'+["Yoxlanmayıb","Bəli","Xeyr"].map(v=>'<option '+(v===q.mentioned?"selected":"")+'>'+v+'</option>').join("")+'</select></label><label>Sayta verilən istinad<input name="citation" value="'+esc(q.citation||"")+'" placeholder="https://…" type="url"></label></div><label>Rəqiblər və qeydlər<textarea name="note" maxlength="3000">'+esc(q.note||"")+'</textarea></label><div class="actions"><button class="btn">Nəticəni saxla</button>'+(q.date?'<small>Son qeyd '+date(q.date)+'</small>':"")+'</div></form></details>').join(""):empty("İlk GEO sorğusunu əlavə et."))+'</section>'+
   '<section class="panel"><div class="panel-head"><h2>AI bot qaydaları</h2></div>'+(robots?'<p class="sub">Axtarış üçün OAI-SearchBot və təlim üçün GPTBot qaydalarını auditdə alınmış robots.txt faylında nəzərdən keçir.</p>'+aiBotStatus(s,robots)+'<details><summary>robots.txt faylı</summary><pre>'+esc(robots)+'</pre></details>':empty("Robots.txt qaydalarını göstərmək üçün texniki audit başlat."))+'</section>';
 }
+const formatNumber=new Intl.NumberFormat("az",{maximumFractionDigits:2});
+const num=v=>v===null||v===undefined?"—":formatNumber.format(v);
+const signed=v=>(v>0?"+":"")+num(v);
+const searchLabels={queries:"Açar sözlər",pages:"Səhifələr",dates:"Tarixlər"};
+let searchTab="queries", searchFilter="", searchSort="clicks", searchLimit=30, peerId="", gapMode="missing", backlinkFilter="", plannedKeyword="";
+const normalized=s=>String(s??"").normalize("NFKC").toLocaleLowerCase("az").trim().replace(/\s+/g," ");
+const fieldKey=v=>String(v??"").normalize("NFKD").replace(/\p{M}/gu,"").toLowerCase().replaceAll("ı","i").replaceAll("ə","e").replace(/[^a-z0-9]+/g," ").trim();
+function csvRows(raw) {
+  const text=raw.replace(/^\uFEFF/,"");
+  const first=text.split(/\r?\n/,1)[0];
+  const delimiters=[",",";","\t"];
+  const separator=delimiters.sort((a,b)=>first.split(b).length-first.split(a).length)[0];
+  const rows=[];let row=[],field="",quoted=false;
+  for(let i=0;i<text.length;i++){
+    const char=text[i];
+    if(quoted){
+      if(char==='"'&&text[i+1]==='"'){field+='"';i++}
+      else if(char==='"')quoted=false;
+      else field+=char;
+    }else if(char==='"'&&field==="")quoted=true;
+    else if(char===separator){row.push(field);field=""}
+    else if(char==="\n"||char==="\r"){
+      if(char==="\r"&&text[i+1]==="\n")i++;
+      row.push(field);if(row.some(x=>x.trim()))rows.push(row);
+      row=[];field="";
+    }else field+=char;
+  }
+  if(quoted)throw Error("CSV faylında bağlanmamış dırnaq var.");
+  row.push(field);if(row.some(x=>x.trim()))rows.push(row);
+  return rows;
+}
+function importNumber(raw){
+  let value=String(raw??"").trim().replace(/[\s%]/g,"");
+  if(value.includes(",")&&value.includes(".")){
+    if(value.lastIndexOf(",")>value.lastIndexOf("."))value=value.replaceAll(".","").replace(",",".");
+    else value=value.replaceAll(",","");
+  }else if(value.includes(","))value=value.replace(",",".");
+  const n=Number(value);
+  return value&&Number.isFinite(n)&&n>=0?n:null;
+}
+function csvColumns(rows){
+  const header=rows[0]?.map(fieldKey)||[];
+  return aliases=>header.findIndex(h=>aliases.includes(h));
+}
+function parseSearch(raw){
+  const rows=csvRows(raw), col=csvColumns(rows);
+  const dimensions=[
+    ["queries",["top queries","query","queries","en iyi sorgular","sorgu","sorgular","acar sozler","en cox sorgular"]],
+    ["pages",["top pages","page","pages","en iyi sayfalar","sayfa","sayfalar","sehifeler","url"]],
+    ["dates",["date","dates","tarih","tarihler","tarix","tarixler"]]
+  ];
+  const found=dimensions.find(([,aliases])=>col(aliases)>=0);
+  const clicks=col(["clicks","click","tiklamalar","tiklama","klikler","klik"]);
+  const impressions=col(["impressions","impression","gosterimler","gosterim","gosterilisler"]);
+  const position=col(["position","average position","konum","ortalama konum","movqe","orta movqe"]);
+  if(!found||clicks<0||impressions<0||position<0)throw Error("Search Console CSV başlıqları tanınmadı. Queries, Pages və ya Dates faylını seç.");
+  const key=col(found[1]), seen=new Set(), result=[];
+  let skipped=0;
+  for(const row of rows.slice(1)){
+    const label=row[key]?.trim();
+    const a=importNumber(row[clicks]), b=importNumber(row[impressions]), p=importNumber(row[position]);
+    if(!label||label.length>800||a===null||b===null||p===null||!Number.isSafeInteger(a)||!Number.isSafeInteger(b)||a>b||seen.has(label)){skipped++;continue}
+    seen.add(label);
+    result.push({label,clicks:a,impressions:b,position:p>0?p:null});
+  }
+  if(!result.length)throw Error("CSV-də oxuna bilən sətir tapılmadı.");
+  if(result.length>2000)throw Error("Bir faylda ən çox 2 000 nəticə yüklə.");
+  return {kind:found[0],rows:result,skipped};
+}
+function parseBacklinks(raw){
+  const rows=csvRows(raw), col=csvColumns(rows);
+  const source=col(["source url","source","links","linking page","linking pages","latest links","sample links","referring page","referring page url","linking site","linking sites","domain","menbe","menbe url","url","link"]);
+  const target=col(["target url","target","target page","linked page","linked pages","destination url","hedef","hedef url"]);
+  const anchor=col(["anchor","anchor text","link text","link metni"]);
+  if(source<0)throw Error("CSV-də Source URL, Linking page və ya Linking site başlığı olmalıdır.");
+  const items=[],seen=new Set();
+  for(const row of rows.slice(1)){
+    const value=row[source]?.trim();
+    if(!value||value.length>700)continue;
+    let url;
+    try{url=new URL(value.includes("://")?value:"https://"+value)}catch{continue}
+    if(!["http:","https:"].includes(url.protocol)||!url.hostname.includes(".")||url.username||url.password)continue;
+    const to=(row[target]||"").trim().slice(0,700), key=url.href+"\n"+to;
+    if(seen.has(key))continue;
+    seen.add(key);
+    items.push({source:url.href,domain:url.hostname.replace(/^www\./,""),target:to,anchor:(row[anchor]||"").slice(0,230)});
+  }
+  if(!items.length)throw Error("CSV-də uyğun keçid tapılmadı.");
+  if(items.length>1500)throw Error("Bir faylda ən çox 1 500 backlink yüklə.");
+  return items;
+}
+async function readCsv(file){
+  if(!file||!file.size)throw Error("CSV faylı seç.");
+  if(file.size>1500000)throw Error("CSV faylı üçün 1,5 MB həddi var.");
+  return file.text();
+}
+function sumSearch(rows){
+  const totals=rows.reduce((t,r)=>{
+    t.clicks+=r.clicks;t.impressions+=r.impressions;
+    if(r.position!==null){t.weight+=r.impressions;t.positionSum+=r.position*r.impressions}
+    return t;
+  },{clicks:0,impressions:0,weight:0,positionSum:0});
+  return {...totals,ctr:totals.impressions?100*totals.clicks/totals.impressions:0,position:totals.weight?totals.positionSum/totals.weight:null};
+}
+const percent=r=>r.impressions?100*r.clicks/r.impressions:0;
+function csvDownload(name,rows){
+  const quote=value=>'"'+String(value??"").replace(/^[=+@-]/,"'$&").replaceAll('"','""')+'"';
+  download(name,"\uFEFF"+rows.map(r=>r.map(quote).join(",")).join("\r\n"),"text/csv;charset=utf-8");
+}
+function trafficTrend(rows){
+  if(!rows.length)return "";
+  const series=[...rows].sort((a,b)=>a.label.localeCompare(b.label));
+  const peak=Math.max(1,...series.map(r=>r.clicks));
+  const width=660,height=124;
+  const coords=series.map((r,i)=>[series.length===1?width/2:6+i*(width-12)/(series.length-1),height-8-r.clicks*(height-18)/peak]);
+  const points=coords.map(c=>c.join(",")).join(" ");
+  return '<section class="panel"><div class="panel-head"><h2>Gündəlik kliklər</h2><small>Pik '+num(peak)+'</small></div><svg class="trend" viewBox="0 0 '+width+' '+height+'" role="img" aria-label="Yüklənmiş tarixlər üzrə gündəlik kliklər"><path d="M0 116H660 M0 70H660 M0 24H660" stroke="#dce4de" fill="none"/><polyline points="'+points+'" fill="none" stroke="#266247" stroke-width="2"/>'+(coords.length===1?'<circle cx="'+coords[0][0]+'" cy="'+coords[0][1]+'" r="4" fill="#266247"/>':"")+'</svg><div class="panel-head small muted"><span>'+esc(series[0].label)+'</span><span>'+esc(series.at(-1).label)+'</span></div></section>';
+}
+function organic(s){
+  const data=s.searchData?.[searchTab]||{}, current=data.current, prior=data.prior;
+  const rows=current?.rows||[];
+  const total=sumSearch(rows), previous=prior?sumSearch(prior.rows):null;
+  const old=new Map((prior?.rows||[]).map(r=>[normalized(r.label),r]));
+  const filtered=rows.filter(r=>normalized(r.label).includes(normalized(searchFilter)));
+  const potential=r=>r.position>=4&&r.position<=20&&r.impressions>0;
+  const sorted=[...filtered].sort((a,b)=>searchSort==="position"?(a.position??Infinity)-(b.position??Infinity):searchSort==="opportunity"?Number(potential(b))-Number(potential(a))||b.impressions-a.impressions:searchSort==="ctr"?percent(b)-percent(a):b[searchSort]-a[searchSort]);
+  const matched=searchSort==="opportunity"?sorted.filter(potential):sorted;
+  const stats=rows.length?'<div class="stats">'+
+  stat("Kliklər",num(total.clicks),previous?signed(total.clicks-previous.clicks)+" əvvəlki dövrə görə":"CSV sətirlərinin cəmi")+
+  stat("Göstərimlər",num(total.impressions),previous?signed(total.impressions-previous.impressions)+" əvvəlki dövrə görə":"CSV sətirlərinin cəmi")+
+  stat("CTR",num(total.ctr)+"%",previous?signed(total.ctr-previous.ctr)+" faiz bəndi":"klik / göstərim")+
+  stat("Orta mövqe",num(total.position),previous&&total.position!==null&&previous.position!==null?signed(total.position-previous.position)+" mövqe fərqi":"göstərim çəkisi ilə")+'</div>':"";
+  return title("Üzvi axtarış","Search Console hesabatından sorğuları, səhifələri və klik trendini araşdır.")+
+  '<section class="panel"><details '+(!current?"open":"")+'><summary><strong>Search Console CSV yüklə</strong></summary><p class="sub small">Search Console → Performans → İxrac et → CSV. ZIP yüklənirsə, əvvəlcə aç və ayrıca Queries, Pages və ya Dates faylını seç.</p><form class="stack" id="search-import"><div class="form-grid"><label>Hesabat CSV-si<input name="file" type="file" accept=".csv,text/csv" required></label><label>Dövrün adı<input name="period" maxlength="80" placeholder="Məsələn, 1–31 oktyabr 2026" required></label></div><label>Hesabatı saxla<select name="slot"><option value="current">Cari dövr</option><option value="prior">Müqayisə dövrü</option></select></label><div><button class="btn primary">CSV-ni yüklə</button> <a class="btn" href="https://search.google.com/search-console" target="_blank" rel="noopener noreferrer">Search Console ↗</a></div></form></details></section>'+
+  '<div class="switches" aria-label="Hesabat növü">'+Object.entries(searchLabels).map(([key,label])=>'<button class="btn '+(key===searchTab?"primary":"")+'" data-search-tab="'+key+'" aria-pressed="'+(key===searchTab)+'">'+label+'</button>').join("")+'</div>'+
+  (rows.length?'<p class="sub period">Cari dövr · '+esc(current.period)+(prior?' | Müqayisə · '+esc(prior.period):"")+'</p>'+stats+(searchTab==="dates"?trafficTrend(rows):"")+
+  '<section class="panel"><form id="search-filter" class="actions"><label>Axtar<input name="filter" value="'+esc(searchFilter)+'"></label><label>Sırala<select name="sort">'+[["clicks","Kliklər"],["impressions","Göstərimlər"],["ctr","CTR"],["position","Mövqe"],["opportunity","İmkanlar · mövqe 4–20"]].map(([key,label])=>'<option value="'+key+'" '+(key===searchSort?"selected":"")+'>'+label+'</option>').join("")+'</select></label><button class="btn">Tətbiq et</button><button type="button" class="btn" data-action="export-search">CSV endir</button></form>'+
+  '<div class="table-scroll"><table><thead><tr><th>'+searchLabels[searchTab]+'</th><th>Klik</th><th>Göstərim</th><th>CTR</th><th>Mövqe</th>'+(prior?"<th>Klik fərqi</th>":"")+(searchTab==="queries"?"<th>Kontent</th>":"")+'</tr></thead><tbody>'+
+  matched.slice(0,searchLimit).map(r=>{const prev=old.get(normalized(r.label));return '<tr><td>'+esc(r.label)+'</td><td>'+num(r.clicks)+'</td><td>'+num(r.impressions)+'</td><td>'+num(percent(r))+'%</td><td>'+num(r.position)+'</td>'+(prior?'<td>'+(prev?signed(r.clicks-prev.clicks):"—")+'</td>':"")+(searchTab==="queries"?'<td><button class="btn" data-plan-keyword="'+esc(r.label)+'">Planla</button></td>':"")+'</tr>'}).join("")+'</tbody></table></div>'+
+  '<p class="sub small period">'+Math.min(matched.length,searchLimit)+' / '+matched.length+' sətir</p>'+(matched.length>searchLimit?'<button class="btn" data-action="search-more">Daha çox göstər</button>':"")+'</section>':empty("Bu hesabat üçün cari dövr CSV-si yüklə."));
+}
+function keywordGap(s){
+  const own=s.searchData?.queries?.current, peers=state.sites.filter(x=>x.id!==s.id&&x.searchData?.queries?.current);
+  const peer=peers.find(x=>x.id===peerId)||peers[0];
+  const other=peer?.searchData.queries.current;
+  const ownMap=new Map((own?.rows||[]).map(r=>[normalized(r.label),r]));
+  const otherMap=new Map((other?.rows||[]).map(r=>[normalized(r.label),r]));
+  const shared=[...otherMap.values()].filter(r=>ownMap.has(normalized(r.label)));
+  const missing=[...otherMap.values()].filter(r=>!ownMap.has(normalized(r.label)));
+  const unique=[...ownMap.values()].filter(r=>!otherMap.has(normalized(r.label)));
+  const list=({shared,missing,unique})[gapMode].sort((a,b)=>b.impressions-a.impressions);
+  return title("Açar söz fərqi","İki saytın yüklənmiş sorğu hesabatını müqayisə et. Müqayisə üçün eyni tarix, ölkə və cihaz filtrlərindən istifadə et.")+
+  (own&&other?'<section class="panel"><div class="form-grid"><label>Müqayisə edilən sayt<select id="gap-peer">'+peers.map(x=>'<option value="'+esc(x.id)+'" '+(peer.id===x.id?"selected":"")+'>'+esc(x.name)+'</option>').join("")+'</select></label><label>Nəticə<select id="gap-mode">'+[["missing","Digər saytda olan"],["shared","Ortaq"],["unique","Yalnız bu saytda olan"]].map(([key,label])=>'<option value="'+key+'" '+(gapMode===key?"selected":"")+'>'+label+'</option>').join("")+'</select></label></div><p class="sub small period">'+esc(own.period)+' / '+esc(other.period)+' · Fərqlər yüklənmiş sorğu siyahılarına əsaslanır.</p></section>'+
+  '<div class="stats">'+stat("Digər saytda",missing.length,"sorğu")+stat("Ortaq",shared.length,"sorğu")+stat("Bu saytda",unique.length,"sorğu")+'</div>'+
+  '<section class="panel"><div class="table-scroll"><table><thead><tr><th>Sorğu</th><th>'+esc(s.name)+' mövqeyi</th><th>'+esc(peer.name)+' mövqeyi</th><th>Göstərimlər</th></tr></thead><tbody>'+
+  list.slice(0,100).map(r=>{const k=normalized(r.label);return '<tr><td>'+esc(r.label)+'</td><td>'+num(ownMap.get(k)?.position)+'</td><td>'+num(otherMap.get(k)?.position)+'</td><td>'+num(r.impressions)+'</td></tr>'}).join("")+'</tbody></table></div><p class="sub small period">İlk '+Math.min(100,list.length)+' / '+list.length+' sorğu</p></section>':
+  empty("Bu sayt və müqayisə edəcəyin sayt üçün Üzvi axtarış bölməsində cari dövr Queries CSV faylı yüklə.")+'<div class="actions"><button class="btn" data-tab="organic">Üzvi axtarışa keç</button></div>');
+}
+function backlinks(s){
+  const items=s.backlinks?.items||[], count=new Set(items.map(x=>x.domain)).size;
+  const filtered=items.filter(x=>normalized(x.source+" "+x.target+" "+x.anchor).includes(normalized(backlinkFilter)));
+  const domains=new Map();
+  for(const item of items)domains.set(item.domain,(domains.get(item.domain)||0)+1);
+  return title("Backlink analizi","CSV-dəki xarici keçidləri, istinad edən domenləri və hədəf səhifələri araşdır.")+
+  '<section class="panel"><form id="backlink-import" class="stack"><label>Backlink CSV-si<input type="file" name="file" accept=".csv,text/csv" required></label><p class="sub small">Source URL sütunu tələb olunur. Target URL və Anchor sütunlarını da əlavə edə bilərsən. Yeni yükləmə cari siyahını əvəz edir.</p><div><button class="btn primary">Backlinkləri yüklə</button></div></form></section>'+
+  (items.length?'<div class="stats">'+stat("Backlink qeydləri",items.length,"CSV məlumatı")+stat("İstinad edən domen",count,"unikal domenlər")+stat("Hədəf URL",new Set(items.map(x=>x.target).filter(Boolean)).size,"CSV-də göstərilən")+'</div>'+
+  '<div class="columns"><section class="panel"><h2>Keçidlər</h2><form id="backlink-filter" class="actions"><label>Domen və ya URL<input name="filter" value="'+esc(backlinkFilter)+'"></label><button class="btn">Axtar</button><button type="button" class="btn" data-action="export-backlinks">CSV endir</button></form><div class="table-scroll"><table><thead><tr><th>Mənbə</th><th>Hədəf</th><th>Link mətni</th></tr></thead><tbody>'+
+  filtered.slice(0,100).map(x=>'<tr><td><a href="'+esc(x.source)+'" target="_blank" rel="noopener noreferrer">'+esc(x.source)+'</a></td><td>'+esc(x.target||"—")+'</td><td>'+esc(x.anchor||"—")+'</td></tr>').join("")+'</tbody></table></div><p class="sub small period">İlk '+Math.min(100,filtered.length)+' / '+filtered.length+' keçid</p></section>'+
+  '<section class="panel"><h2>Əsas istinad domenləri</h2>'+[...domains].sort((a,b)=>b[1]-a[1]).slice(0,12).map(([host,n])=>'<div class="row"><div>'+esc(host)+'</div><span class="pill">'+n+'</span></div>').join("")+'</section></div>':empty("Hesabatı görmək üçün backlink CSV faylı yüklə."));
+}
+
 function content(s){
   const tracking='<section class="panel"><div class="panel-head"><div><h2>Açar söz mövqeləri</h2><p class="sub small">Mövqeni, ölkəni və cihazı tarix üzrə əl ilə qeyd et.</p></div></div><form id="rank-form" class="stack"><div class="form-grid"><label>Açar söz<input name="keyword" maxlength="200" required></label><label>Ölkə<input name="country" maxlength="60" placeholder="Azərbaycan" required></label><label>Cihaz<select name="device"><option>Mobil</option><option>Masaüstü</option></select></label><label>Mövqe<input name="position" type="number" min="1" max="1000" step="1" required></label></div><div><button class="btn">Mövqeni saxla</button></div></form>'+
   ((s.ranks||[]).length?'<div class="table-scroll"><table><thead><tr><th>Açar söz</th><th>Ölkə / cihaz</th><th>Mövqe</th><th>Tarix</th></tr></thead><tbody>'+s.ranks.slice(0,60).map(r=>'<tr><td>'+esc(r.keyword)+'</td><td>'+esc(r.country)+' · '+esc(r.device)+'</td><td>'+r.position+'</td><td>'+date(r.date)+'</td></tr>').join("")+'</tbody></table></div>':"")+'</section>';
   return title("Kontent və açar sözlər","Açar söz, hədəf səhifə və kontent planını sayt üzrə saxla.")+tracking+
-  '<section class="panel"><form id="content-form" class="stack"><div class="form-grid"><label>Açar söz və ya mövzu<input name="keyword" required maxlength="200"></label><label>Dil<select name="language"><option>Azərbaycan dili</option><option>Türkcə</option><option>İngiliscə</option></select></label></div><label>Hədəf səhifə<input name="target" placeholder="/blog/…"></label><label>Kontent qeydi<textarea name="brief" maxlength="3000"></textarea></label><div><button class="btn primary">Plana əlavə et</button></div></form></section>'+
+  '<section class="panel"><form id="content-form" class="stack"><div class="form-grid"><label>Açar söz və ya mövzu<input name="keyword" required maxlength="200" value="'+esc(plannedKeyword.slice(0,200))+'"></label><label>Dil<select name="language"><option>Azərbaycan dili</option><option>Türkcə</option><option>İngiliscə</option></select></label></div><label>Hədəf səhifə<input name="target" placeholder="/blog/…"></label><label>Kontent qeydi<textarea name="brief" maxlength="3000"></textarea></label><div><button class="btn primary">Plana əlavə et</button></div></form></section>'+
   '<section class="panel"><div class="panel-head"><h2>Kontent planı</h2></div>'+(s.notes.length?s.notes.map(n=>'<div class="row"><div><h3>'+esc(n.keyword)+'</h3><p class="muted small">'+esc(n.language)+(n.target?' · '+esc(n.target):'')+'</p><p>'+esc(n.brief)+'</p></div></div>').join(""):empty("Kontent mövzuları burada görünəcək."))+'</section>';
 }
 function reports(s){
@@ -509,7 +681,7 @@ function settings(s){
 function download(name,content,type){
   const url=URL.createObjectURL(new Blob([content],{type})), a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-function select(id){pageFilter="";issueFilter="";active=id;localStorage.setItem("seo-site",id);tab="home";chosen="";message("");render()}
+function select(id){pageFilter="";issueFilter="";searchFilter="";backlinkFilter="";searchLimit=30;peerId="";plannedKeyword="";active=id;localStorage.setItem("seo-site",id);tab="home";chosen="";message("");render()}
 function navigate(name){if(active==="all"&&name!=="home")active=state.sites[0].id;tab=name;message("");render()}
 $("sites").onchange=e=>select(e.target.value);
 $("add").onclick=()=>{$("site-error").textContent="";$("dialog").showModal()};
@@ -543,6 +715,14 @@ document.addEventListener("click",e=>{
     const rows=[["URL","Son URL","HTTP","SEO başlığı","Meta açıqlaması","Canonical","Meta robots","Problemlər"],...s.crawl.pages.map(p=>[p.requested,p.url,p.status,p.title,p.description,p.canonical,p.directives,(all.get(p.requested)||[]).map(x=>x[1]).join(" | ")])];
     download(s.id+"-sayt-audit.csv","\uFEFF"+rows.map(row=>row.map(csv).join(",")).join("\r\n"),"text/csv;charset=utf-8");
   }
+  if(d.planKeyword){plannedKeyword=d.planKeyword;navigate("content");$("content-form")?.scrollIntoView({block:"center"})}
+  if(d.searchTab){searchTab=d.searchTab;searchFilter="";searchLimit=30;searchSort="clicks";render()}
+  if(d.action==="search-more"){searchLimit+=50;render()}
+  if(d.action==="export-search"){
+    const rows=s.searchData?.[searchTab]?.current?.rows||[];
+    csvDownload(s.id+"-"+searchTab+".csv",[[searchLabels[searchTab],"Klik","Göstərim","CTR","Mövqe"],...rows.map(r=>[r.label,r.clicks,r.impressions,percent(r),r.position])]);
+  }
+  if(d.action==="export-backlinks")csvDownload(s.id+"-backlinks.csv",[["Source URL","Target URL","Anchor"],...(s.backlinks?.items||[]).map(x=>[x.source,x.target,x.anchor])]);
   if(d.action==="new-page"){chosen="";render()}
   if(d.action==="from-audit"){chosen="audit";navigate("pages")}
   if(d.action==="export-report")download(s.id+"-seo.json",JSON.stringify(s,null,2),"application/json");
@@ -563,6 +743,24 @@ document.addEventListener("submit",async e=>{
   e.preventDefault();message("");
   const button=e.submitter, f=Object.fromEntries(new FormData(form));if(button)button.disabled=true;
   try{
+    if(form.id==="search-filter"){searchFilter=f.filter;searchSort=f.sort;searchLimit=30;render();return}
+    if(form.id==="backlink-filter"){backlinkFilter=f.filter;render();return}
+    if(form.id==="search-import"){
+      const period=f.period.trim();
+      if(!period)throw Error("Dövrün adını daxil et.");
+      const parsed=parseSearch(await readCsv(f.file));
+      await changeSite(s.id,item=>{
+        item.searchData??={};item.searchData[parsed.kind]??={};
+        item.searchData[parsed.kind][f.slot]={period,rows:parsed.rows,date:new Date().toISOString()};
+      });
+      if(active===s.id){searchTab=parsed.kind;searchLimit=30;searchFilter="";searchSort="clicks"}
+      render();message(parsed.rows.length+" sətir saxlanıldı."+(parsed.skipped?" "+parsed.skipped+" sətir ötürüldü.":""));return;
+    }
+    if(form.id==="backlink-import"){
+      const items=parseBacklinks(await readCsv(f.file));
+      await changeSite(s.id,item=>{item.backlinks={items,date:new Date().toISOString()}});
+      backlinkFilter="";render();message(items.length+" backlink qeydi saxlanıldı.");return;
+    }
     if(form.id==="page-filter-form"){pageFilter=f.filter.trim();render();return}
     if(form.id==="audit-form"){
       const u=pageUrl(f.url);
@@ -597,12 +795,20 @@ document.addEventListener("submit",async e=>{
     }else if(form.id==="content-form"){
       f.keyword=f.keyword.trim();if(!f.keyword)throw Error("Açar söz və ya mövzu daxil et.");
       await changeSite(s.id,item=>item.notes.unshift({...f,id:crypto.randomUUID()}));
+      plannedKeyword="";
     }else return;
     render();message(form.id==="audit-form"?"Audit saxlanıldı.":"Dəyişiklik saxlanıldı.");
   }catch(err){message(err.message);if(form.id==="audit-form"&&button)button.textContent="Auditi başlat"}
   finally{if(button)button.disabled=false}
 });
-document.addEventListener("change",e=>{if(e.target.id==="issue-filter"){issueFilter=e.target.value;render();$("issue-filter")?.focus()}});
+document.addEventListener("change",e=>{
+  const id=e.target.id;
+  if(id==="issue-filter")issueFilter=e.target.value;
+  else if(id==="gap-peer")peerId=e.target.value;
+  else if(id==="gap-mode")gapMode=e.target.value;
+  else return;
+  render();$(id)?.focus();
+});
 api("state").then(data=>{state=data.state;revision=data.revision;if(active!=="all"&&!site())active=state.sites[0].id;render()})
 .catch(err=>{$("view").textContent="Panel açıla bilmədi.";message(err.message)});
 </script></body></html>`;
