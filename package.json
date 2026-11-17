@@ -5,7 +5,8 @@
   "scripts": {
     "build": "bash scripts/build.sh",
     "validate": "node scripts/validate-artifact.mjs",
-    "start": "node --env-file-if-exists=.env server/index.js"
+    "start": "node --env-file-if-exists=.env server/index.js",
+    "start:live-site": "node --env-file-if-exists=.env.live-site server/live-site-start.js"
   },
   "dependencies": {
     "ipaddr.js": "^2.5.0",

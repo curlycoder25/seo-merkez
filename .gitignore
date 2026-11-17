@@ -3,3 +3,5 @@ site.tar.gz
 node_modules/
 .env
 data/
+
+.env.live-site

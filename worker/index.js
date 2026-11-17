@@ -243,9 +243,9 @@ export default {
   async fetch(request, env) {
     const {pathname} = new URL(request.url);
     const json = (value,status=200)=>Response.json(value,{status,headers:{"cache-control":"no-store"}});
-    const available = state=>state.sites.filter(site=>{
-      if(!env.PUBLISH)return false;
-      try{return env.PUBLISH.status(new URL(site.url).origin)}catch{return false}
+    const available = (state,service)=>state.sites.filter(site=>{
+      if(!service)return false;
+      try{return service.status(new URL(site.url).origin)}catch{return false}
     }).map(site=>site.id);
     if (pathname === "/") return new Response(HTML,{headers:{"content-type":"text/html; charset=utf-8","cache-control":"no-store","x-content-type-options":"nosniff"}});
     if (!pathname.startsWith("/api/")) return new Response("Tapılmadı",{status:404});
@@ -254,7 +254,7 @@ export default {
       if (pathname==="/api/state" && request.method==="GET") {
         const row = await env.DB.prepare("SELECT data, revision FROM workspace WHERE id = 1").first();
         const state=row?JSON.parse(row.data):initial;
-        return json({state,revision:row?.revision??0,connected:available(state)});
+        return json({state,revision:row?.revision??0,connected:available(state,env.PUBLISH),liveConnected:available(state,env.LIVESEO)});
       }
       if (pathname==="/api/state" && request.method==="PUT") {
         const raw = await request.text();
@@ -263,7 +263,7 @@ export default {
         if (!Array.isArray(state?.sites) || !Number.isSafeInteger(revision) || revision<0) return json({error:"Məlumat formatı yanlışdır."},400);
         await env.DB.prepare("INSERT OR IGNORE INTO workspace(id,data,revision) VALUES(1,?,0)").bind(JSON.stringify(initial)).run();
         const result = await env.DB.prepare("UPDATE workspace SET data=?, revision=revision+1 WHERE id=1 AND revision=?").bind(JSON.stringify(state),revision).run();
-        return result.meta.changes ? json({revision:revision+1,connected:available(state)}) : json({error:"Panel başqa pəncərədə yenilənib. Səhifəni yenilə."},409);
+        return result.meta.changes ? json({revision:revision+1,connected:available(state,env.PUBLISH),liveConnected:available(state,env.LIVESEO)}) : json({error:"Panel başqa pəncərədə yenilənib. Səhifəni yenilə."},409);
       }
       if (pathname==="/api/publish" && request.method==="POST") {
         if(!env.PUBLISH)return json({error:"GitHub yayımlaması self-host serverində qurulur."},422);
@@ -318,7 +318,7 @@ header{height:66px;border-bottom:1px solid var(--border);display:flex;align-item
 <script>
 const $=id=>document.getElementById(id);
 const sections=[["home","◫","İcmal"],["audit","◎","Texniki audit"],["pages","▤","Səhifələr"],["geo","✦","AI görünürlüyü"],["organic","↗","Üzvi axtarış"],["gap","⇆","Açar söz fərqi"],["backlinks","↪","Backlink analizi"],["content","◇","Kontent və açar sözlər"],["compare","⇄","Domen müqayisəsi"],["reports","↗","Hesabatlar"],["settings","⚙","Bağlantılar"]];
-let state, revision, connected=[], publishSelection, active=localStorage.getItem("seo-site")||"bubora", tab="home", chosen="";
+let state, revision, connected=[], liveConnected=[], publishSelection, active=localStorage.getItem("seo-site")||"bubora", tab="home", chosen="";
 let saving=false;
 const esc=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function message(text){$("message").textContent=text}
@@ -335,7 +335,7 @@ async function api(path,method="GET",payload){
 async function setState(next){
   if(saving)throw Error("Əvvəlki dəyişiklik saxlanılır.");
   saving=true;
-  try{const data=await api("state","PUT",{state:next,revision});state=next;revision=data.revision;connected=data.connected||[]}
+  try{const data=await api("state","PUT",{state:next,revision});state=next;revision=data.revision;connected=data.connected||[];liveConnected=data.liveConnected||[]}
   finally{saving=false}
 }
 async function changeSite(id,update){const next=structuredClone(state);update(next.sites.find(s=>s.id===id));await setState(next)}
@@ -497,7 +497,7 @@ function pages(s){
   '<div class="form-grid"><label>Meta robots<input name="directives" maxlength="200" value="'+esc(p?.directives??a?.directives??"")+'" placeholder="index, follow"></label><label>Open Graph açıqlaması<input name="ogDescription" maxlength="700" value="'+esc(p?.ogDescription??a?.ogDescription??"")+'"></label></div>'+
   '<label>hreflang alternativləri<textarea name="hreflangs" placeholder="az https://example.com/az">'+esc(p?.hreflangs??a?.hreflang?.map(([lang,url])=>lang+" "+url).join("\n")??"")+'</textarea></label>'+
   '<label>JSON-LD<textarea name="schema" placeholder="{…}">'+esc(p?.schema??a?.schema??"")+'</textarea></label>'+
-  '<div class="actions"><button class="btn primary">Qaralamanı saxla</button>'+(p?'<button type="button" class="btn" data-action="export-page">HTML ixrac et</button><button type="button" class="btn primary" data-action="publish-preview" data-draft="'+esc(p.id)+'">Yayımlamanı önizlə</button><button type="button" class="btn" data-action="new-page">Yeni qaralama</button>':"")+'</div></form></section>'+
+  '<div class="actions"><button class="btn primary">'+(liveConnected.includes(s.id)?"Saxla və canlıya tətbiq et":"Qaralamanı saxla")+'</button>'+(p?'<button type="button" class="btn" data-action="export-page">HTML ixrac et</button><button type="button" class="btn primary" data-action="publish-preview" data-draft="'+esc(p.id)+'">Yayımlamanı önizlə</button><button type="button" class="btn" data-action="new-page">Yeni qaralama</button>':"")+'</div></form></section>'+
   '<div>'+pageDiagnostics(s,selected)+'<section class="panel"><div class="panel-head"><h2>Saxlanılan qaralamalar</h2></div>'+
   (s.pages.length?s.pages.map(p=>'<div class="row"><div><h3>'+esc(p.title||p.url)+'</h3><p class="small muted">'+esc(p.url)+'</p></div><button class="btn" data-page="'+esc(p.id)+'">Aç</button></div>').join(""):empty("İlk qaralamanı saxladıqdan sonra burada görünəcək."))+'</section></div></div>';
 }
@@ -693,7 +693,8 @@ function reports(s){
 }
 function settings(s){
   const integrations=[["Google Search Console","Klik və göstərimlər","https://search.google.com/search-console"],["Google Analytics 4","Üzvi trafik və qeydiyyatlar","https://analytics.google.com"],["Bing Webmaster Tools","Microsoft axtarış və AI istinadları","https://www.bing.com/webmasters"],["GitHub",connected.includes(s.id)?"Qaralamanı saxla, sonra Səhifələr bölməsindən yayımla.":"Serverdə bu domen üçün SEO_GITHUB_TOKEN və SEO_GITHUB_TARGETS qur.",s.repo]];
-  return title("Bağlantılar","Canlı məlumat və yayımlama üçün istifadə ediləcək xidmətlər.")+'<div class="module">'+integrations.map(([name,detail,link])=>'<section class="panel"><div class="panel-head"><h2>'+name+'</h2><span class="pill '+(name==="GitHub"&&connected.includes(s.id)?"":"warn")+'">'+(name==="GitHub"&&connected.includes(s.id)?"Qurulub":"Qoşulmayıb")+'</span></div><p class="muted">'+detail+'</p>'+(link?'<a class="btn" href="'+esc(link)+'" target="_blank" rel="noopener noreferrer">Xidməti aç ↗</a>':"")+'</section>').join("")+'</div>';
+  return title("Bağlantılar","Canlı məlumat və yayımlama üçün istifadə ediləcək xidmətlər.")+
+  '<section class="panel"><div class="panel-head"><h2>Canlı SEO</h2><span class="pill '+(liveConnected.includes(s.id)?"":"warn")+'">'+(liveConnected.includes(s.id)?"Paneldə aktivdir":"Qoşulmayıb")+'</span></div><p class="sub">Başlıq və meta açıqlamasını tətbiq etmək üçün serverdə domeni SEO_LIVE_TARGETS ilə qoş və sayt inteqrasiyasını işə sal.</p></section>'+'<div class="module">'+integrations.map(([name,detail,link])=>'<section class="panel"><div class="panel-head"><h2>'+name+'</h2><span class="pill '+(name==="GitHub"&&connected.includes(s.id)?"":"warn")+'">'+(name==="GitHub"&&connected.includes(s.id)?"Qurulub":"Qoşulmayıb")+'</span></div><p class="muted">'+detail+'</p>'+(link?'<a class="btn" href="'+esc(link)+'" target="_blank" rel="noopener noreferrer">Xidməti aç ↗</a>':"")+'</section>').join("")+'</div>';
 }
 function download(name,content,type){
   const url=URL.createObjectURL(new Blob([content],{type})), a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -820,9 +821,12 @@ document.addEventListener("submit",async e=>{
       }).join("\n");
       if(f.schema){const schema=JSON.parse(f.schema);if(!schema||typeof schema!=="object")throw Error("JSON-LD obyekti və ya siyahısı daxil et.")}
       const existing=s.pages.find(p=>p.id===chosen||p.url===f.url);
-      const record={...f,id:existing?.id||crypto.randomUUID(),updated:new Date().toISOString()};
+      const live=liveConnected.includes(s.id)&&new URL(f.url).origin===new URL(s.url).origin&&!new URL(f.url).search;
+      if(liveConnected.includes(s.id)&&!live)throw Error("Canlı tətbiq üçün seçilmiş domenin parametrsiz URL-ini daxil et.");
+      const record={...f,live,id:existing?.id||crypto.randomUUID(),updated:new Date().toISOString()};
       await changeSite(s.id,item=>{item.pages=existing?item.pages.map(p=>p.id===existing.id?record:p):[record,...item.pages]});
       if(active===s.id)chosen=record.id;
+      if(live){render();message("Başlıq və meta açıqlaması saxlanıldı. Sayt inteqrasiya üzərindən növbəti sorğuda onları oxuyacaq.");return}
     }else if(form.id==="query-form"){
       f.question=f.question.trim();if(!f.question)throw Error("Sorğunu daxil et.");
       await changeSite(s.id,item=>item.queries.push({...f,id:crypto.randomUUID()}));
@@ -850,6 +854,6 @@ document.addEventListener("change",e=>{
   else return;
   render();$(id)?.focus();
 });
-api("state").then(data=>{state=data.state;revision=data.revision;connected=data.connected||[];if(active!=="all"&&!site())active=state.sites[0].id;render()})
+api("state").then(data=>{state=data.state;revision=data.revision;connected=data.connected||[];liveConnected=data.liveConnected||[];if(active!=="all"&&!site())active=state.sites[0].id;render()})
 .catch(err=>{$("view").textContent="Panel açıla bilmədi.";message(err.message)});
 </script></body></html>`;

@@ -9,6 +9,7 @@ import { pipeline } from "node:stream/promises";
 import { Agent, setGlobalDispatcher } from "undici";
 import ipaddr from "ipaddr.js";
 import app from "../worker/index.js";
+import { createLiveSeo } from "./live-seo.js";
 import { createPublisher } from "./publish.js";
 
 const {SEO_PUBLIC_URL,SEO_ADMIN_PASSWORD,SEO_ADMIN_USER="admin",SEO_BIND="127.0.0.1",PORT=8787}=process.env;
@@ -53,10 +54,19 @@ const DB={
   }
 };
 const PUBLISH=createPublisher({token:process.env.SEO_GITHUB_TOKEN,targets:JSON.parse(process.env.SEO_GITHUB_TARGETS||"{}")});
+const liveSeo=createLiveSeo(JSON.parse(process.env.SEO_LIVE_TARGETS||"{}"),sqlite);
 const server=createServer({requestTimeout:30000},async (req,res)=>{
   res.setHeader("Cache-Control","no-store");
   res.setHeader("X-Content-Type-Options","nosniff");
   res.setHeader("X-Frame-Options","DENY");
+  const route=req.url?.split("?",1)[0];
+  if(route==="/api/live-seo"&&req.method==="GET"){
+    try{
+      const response=liveSeo.read(new URL(req.url,publicUrl),req.headers.authorization);
+      res.writeHead(response.status,Object.fromEntries(response.headers)).end(await response.text());
+    }catch{res.writeHead(502,{"Content-Type":"application/json"}).end('{"error":"SEO məlumatı oxunmadı."}')}
+    return;
+  }
   if(!authenticated(req.headers.authorization)){
     res.writeHead(401,{"WWW-Authenticate":'Basic realm="SEO Merkezi", charset="UTF-8"'});
     res.end("Giriş tələb olunur.");return;
@@ -76,7 +86,7 @@ const server=createServer({requestTimeout:30000},async (req,res)=>{
       }
       body=Buffer.concat(parts);
     }
-    const response=await app.fetch(new Request(url,{method:req.method,headers,body}),{DB,PUBLISH});
+    const response=await app.fetch(new Request(url,{method:req.method,headers,body}),{DB,PUBLISH,LIVESEO:liveSeo});
     res.writeHead(response.status,Object.fromEntries(response.headers));
     if(response.body)await pipeline(Readable.fromWeb(response.body),res);
     else res.end();
