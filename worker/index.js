@@ -243,13 +243,18 @@ export default {
   async fetch(request, env) {
     const {pathname} = new URL(request.url);
     const json = (value,status=200)=>Response.json(value,{status,headers:{"cache-control":"no-store"}});
+    const available = state=>state.sites.filter(site=>{
+      if(!env.PUBLISH)return false;
+      try{return env.PUBLISH.status(new URL(site.url).origin)}catch{return false}
+    }).map(site=>site.id);
     if (pathname === "/") return new Response(HTML,{headers:{"content-type":"text/html; charset=utf-8","cache-control":"no-store","x-content-type-options":"nosniff"}});
     if (!pathname.startsWith("/api/")) return new Response("Tapılmadı",{status:404});
     if (request.method !== "GET" && request.headers.get("Origin") !== new URL(request.url).origin) return json({error:"Sorğu qəbul edilmədi."},403);
     try {
       if (pathname==="/api/state" && request.method==="GET") {
         const row = await env.DB.prepare("SELECT data, revision FROM workspace WHERE id = 1").first();
-        return json(row?{state:JSON.parse(row.data),revision:row.revision}:{state:initial,revision:0});
+        const state=row?JSON.parse(row.data):initial;
+        return json({state,revision:row?.revision??0,connected:available(state)});
       }
       if (pathname==="/api/state" && request.method==="PUT") {
         const raw = await request.text();
@@ -258,7 +263,18 @@ export default {
         if (!Array.isArray(state?.sites) || !Number.isSafeInteger(revision) || revision<0) return json({error:"Məlumat formatı yanlışdır."},400);
         await env.DB.prepare("INSERT OR IGNORE INTO workspace(id,data,revision) VALUES(1,?,0)").bind(JSON.stringify(initial)).run();
         const result = await env.DB.prepare("UPDATE workspace SET data=?, revision=revision+1 WHERE id=1 AND revision=?").bind(JSON.stringify(state),revision).run();
-        return result.meta.changes ? json({revision:revision+1}) : json({error:"Panel başqa pəncərədə yenilənib. Səhifəni yenilə."},409);
+        return result.meta.changes ? json({revision:revision+1,connected:available(state)}) : json({error:"Panel başqa pəncərədə yenilənib. Səhifəni yenilə."},409);
+      }
+      if (pathname==="/api/publish" && request.method==="POST") {
+        if(!env.PUBLISH)return json({error:"GitHub yayımlaması self-host serverində qurulur."},422);
+        const {siteId,pageId,check}=await request.json();
+        if(check!==undefined&&!/^[a-f0-9]{64}$/.test(check))return json({error:"Önizləmə kodu yanlışdır."},400);
+        const row=await env.DB.prepare("SELECT data, revision FROM workspace WHERE id = 1").first();
+        const site=(row?JSON.parse(row.data):initial).sites.find(item=>item.id===siteId);
+        const draft=site?.pages.find(page=>page.id===pageId);
+        if(!draft)return json({error:"Əvvəlcə SEO qaralamasını saxla."},404);
+        try{return json(await env.PUBLISH.run({origin:new URL(site.url).origin,draft,expected:check}))}
+        catch(error){return json({error:error.status?error.message:"GitHub bağlantısı tamamlanmadı. Repo dəyişibsə, yenidən önizlə."},error.status||502)}
       }
       if (pathname==="/api/audit" && request.method==="POST") {
         const {url} = await request.json();
@@ -290,7 +306,7 @@ const HTML = String.raw`<!doctype html>
 :root{color-scheme:light;--bg:#f5f7f6;--side:#ffffff;--surface:#ffffff;--border:#dce4de;--text:#182820;--muted:#52645a;--lime:#266247;--warn:#85491c;--mono:"IBM Plex Mono",monospace}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px Manrope,system-ui,sans-serif}button,input,select,textarea{font:inherit}button,a,select{cursor:pointer}button{color:inherit}a{color:var(--lime)}button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--lime);outline-offset:3px}
 .shell{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100svh}aside{background:var(--side);border-right:1px solid var(--border);padding:25px 17px;display:flex;flex-direction:column;gap:28px}.brand{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:800;letter-spacing:-.5px;padding:0 7px}.mark{background:var(--lime);color:#ffffff;border-radius:9px;width:34px;height:34px;display:grid;place-items:center;font-size:23px;font-weight:800}.nav-title,.eyebrow{font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.11em;color:var(--muted);margin:0 0 10px}.nav-title{padding-left:10px}.nav{display:grid;gap:3px}.nav button{text-align:left;background:none;border:1px solid transparent;border-radius:8px;padding:10px;color:var(--muted);font-weight:700}.nav button[aria-current=page]{background:#e7f2ea;border-color:#cbded1;color:var(--lime)}.icon{display:inline-block;width:24px;font:500 15px var(--mono)}.sidebar-foot{margin-top:auto;padding:12px 9px;border-top:1px solid var(--border);color:var(--muted);font-size:12px}.dot{display:inline-block;width:7px;height:7px;background:var(--lime);border-radius:100%;margin-right:7px}
-header{height:66px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 31px;background:#ffffff}.toolbar{display:flex;align-items:center;gap:9px}.crumb{color:var(--muted);font-size:13px}main{padding:30px 32px 50px;max-width:1440px;margin:auto}.hero{border:1px solid #cfdfd4;border-radius:15px;background:linear-gradient(104deg,#e5f2e8,#eff7f0 60%,#dfede4);padding:28px;display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:20px;position:relative;overflow:hidden}.hero>*{z-index:1}.hero:after{content:"";position:absolute;inset:0 0 0 67%;opacity:.24;background:radial-gradient(#749782 1px,transparent 1px) 0 0 / 13px 13px;mask-image:linear-gradient(90deg,transparent,#000)}.hero .eyebrow{color:var(--lime)}h1,h2,h3,p{margin:0}h1{font-size:clamp(29px,4vw,46px);letter-spacing:-.055em;line-height:1.06;margin-bottom:10px}h2{font-size:18px;letter-spacing:-.035em}h3{font-size:14px}.sub,.muted{color:var(--muted)}.sub{line-height:1.65}.page-title{margin:0 0 20px}.page-title h1{font-size:36px}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:19px}.stat,.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px}.stat{padding:15px}.stat strong{font:500 26px var(--mono);display:block;margin:8px 0 3px}.stat em{font:normal 11px var(--mono);color:var(--muted)}.columns{display:grid;grid-template-columns:1.55fr 1fr;gap:14px;margin-bottom:17px}.panel{padding:17px;margin-bottom:13px}.columns>.panel{margin:0}.panel-head,.row,.actions{display:flex;align-items:center;justify-content:space-between;gap:12px}.panel-head{margin-bottom:13px}.row{padding:12px 0;border-top:1px solid var(--border)}.row>div{min-width:0;overflow-wrap:anywhere}.row p{margin-top:4px}.empty{padding:14px;border:1px dashed #bccdc1;border-radius:8px;color:var(--muted);line-height:1.5}.btn,select{border:1px solid #cbd9d0;border-radius:8px;background:#f4f8f5;color:var(--text);padding:9px 12px;text-decoration:none;font-size:13px;font-weight:800;display:inline-block}.btn.primary{background:var(--lime);color:#ffffff;border-color:var(--lime)}.btn:disabled{opacity:.55;cursor:wait}.pill{font:500 11px var(--mono);white-space:nowrap;color:var(--lime);background:#e6f2e9;padding:5px 8px;border-radius:6px}.pill.warn{color:var(--warn);background:#fff0da}.stack{display:grid;gap:11px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}label{display:grid;gap:6px;font-size:13px;font-weight:700}input,textarea{width:100%;padding:10px 11px;background:#f8fbf9;border:1px solid #becec3;border-radius:7px;color:var(--text)}textarea{min-height:92px;resize:vertical}.actions{justify-content:flex-start;flex-wrap:wrap;margin-top:12px}.message{min-height:20px;color:var(--warn);margin-bottom:9px}.message:empty{display:none}dialog{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:13px;width:min(490px,93vw);padding:23px}dialog::backdrop{background:#172e2466}pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:10px;background:#f8fbf9;border-radius:7px;color:#334e3f;max-height:280px;overflow:auto}.toolbar select{max-width:185px}small{color:var(--muted)}.small{font-size:12px}.quiet{color:var(--muted)}.module{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.module .panel{margin:0}.module p{margin:8px 0;line-height:1.5}details{border-top:1px solid var(--border);padding:12px 0}summary{cursor:pointer}
+header{height:66px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 31px;background:#ffffff}.toolbar{display:flex;align-items:center;gap:9px}.crumb{color:var(--muted);font-size:13px}main{padding:30px 32px 50px;max-width:1440px;margin:auto}.hero{border:1px solid #cfdfd4;border-radius:15px;background:linear-gradient(104deg,#e5f2e8,#eff7f0 60%,#dfede4);padding:28px;display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:20px;position:relative;overflow:hidden}.hero>*{z-index:1}.hero:after{content:"";position:absolute;inset:0 0 0 67%;opacity:.24;background:radial-gradient(#749782 1px,transparent 1px) 0 0 / 13px 13px;mask-image:linear-gradient(90deg,transparent,#000)}.hero .eyebrow{color:var(--lime)}h1,h2,h3,p{margin:0}h1{font-size:clamp(29px,4vw,46px);letter-spacing:-.055em;line-height:1.06;margin-bottom:10px}h2{font-size:18px;letter-spacing:-.035em}h3{font-size:14px}.sub,.muted{color:var(--muted)}.sub{line-height:1.65}.page-title{margin:0 0 20px}.page-title h1{font-size:36px}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:19px}.stat,.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px}.stat{padding:15px}.stat strong{font:500 26px var(--mono);display:block;margin:8px 0 3px}.stat em{font:normal 11px var(--mono);color:var(--muted)}.columns{display:grid;grid-template-columns:1.55fr 1fr;gap:14px;margin-bottom:17px}.panel{padding:17px;margin-bottom:13px}.columns>.panel{margin:0}.panel-head,.row,.actions{display:flex;align-items:center;justify-content:space-between;gap:12px}.panel-head{margin-bottom:13px}.row{padding:12px 0;border-top:1px solid var(--border)}.row>div{min-width:0;overflow-wrap:anywhere}.row p{margin-top:4px}.empty{padding:14px;border:1px dashed #bccdc1;border-radius:8px;color:var(--muted);line-height:1.5}.btn,select{border:1px solid #cbd9d0;border-radius:8px;background:#f4f8f5;color:var(--text);padding:9px 12px;text-decoration:none;font-size:13px;font-weight:800;display:inline-block}.btn.primary{background:var(--lime);color:#ffffff;border-color:var(--lime)}button[hidden]{display:none}.btn:disabled{opacity:.55;cursor:wait}.pill{font:500 11px var(--mono);white-space:nowrap;color:var(--lime);background:#e6f2e9;padding:5px 8px;border-radius:6px}.pill.warn{color:var(--warn);background:#fff0da}.stack{display:grid;gap:11px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}label{display:grid;gap:6px;font-size:13px;font-weight:700}input,textarea{width:100%;padding:10px 11px;background:#f8fbf9;border:1px solid #becec3;border-radius:7px;color:var(--text)}textarea{min-height:92px;resize:vertical}.actions{justify-content:flex-start;flex-wrap:wrap;margin-top:12px}.message{min-height:20px;color:var(--warn);margin-bottom:9px}.message:empty{display:none}dialog{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:13px;width:min(490px,93vw);padding:23px}dialog::backdrop{background:#172e2466}pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:10px;background:#f8fbf9;border-radius:7px;color:#334e3f;max-height:280px;overflow:auto}.toolbar select{max-width:185px}small{color:var(--muted)}.small{font-size:12px}.quiet{color:var(--muted)}.module{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.module .panel{margin:0}.module p{margin:8px 0;line-height:1.5}details{border-top:1px solid var(--border);padding:12px 0}summary{cursor:pointer}
 @media(max-width:960px){.shell{grid-template-columns:185px minmax(0,1fr)}main{padding:23px 19px}header{padding:0 19px}.columns{grid-template-columns:1fr}}@media(max-width:700px){.shell{display:block}aside{padding:12px;gap:9px;border-right:0;border-bottom:1px solid var(--border)}.nav{display:flex;overflow:auto}.nav button{white-space:nowrap}.nav-title,.sidebar-foot{display:none}header{padding:0 12px;height:55px}.crumb{display:none}.toolbar{width:100%;justify-content:space-between}main{padding:17px 12px}.hero{padding:19px;align-items:flex-start;flex-direction:column}.stats,.module{grid-template-columns:repeat(2,minmax(0,1fr))}.form-grid{grid-template-columns:1fr}}
 .table-scroll{overflow:auto;margin-top:12px}table{width:100%;min-width:590px;border-collapse:collapse;text-align:left}th{font-size:12px;color:var(--muted);background:#f0f6f1}th,td{padding:10px;border-bottom:1px solid var(--border);vertical-align:top}td:first-child{min-width:220px;overflow-wrap:anywhere}td .btn{white-space:nowrap}.serp{background:#f8fbf9;border:1px solid var(--border);border-radius:8px;padding:14px;overflow-wrap:anywhere}.serp h3{color:#224ea3;font-size:17px;margin:4px 0}.serp p{color:var(--muted)}.stack+details{margin-top:10px}#crawl-progress{margin-top:10px}
 .nav-group{display:grid;gap:3px;margin-bottom:12px}.nav-group .nav-title{margin:6px 0 4px}.switches{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.trend{display:block;width:100%;max-height:175px}.period{margin:10px 0}.panel details:first-child{border-top:0;padding-top:0}.panel details form{margin-top:12px}@media(max-width:700px){.nav-group{display:contents}}
@@ -298,10 +314,11 @@ header{height:66px;border-bottom:1px solid var(--border);display:flex;align-item
 <div class="shell"><aside><div class="brand"><span class="mark" aria-hidden="true">↗</span>SEO Mərkəzi</div><div><nav class="nav" aria-label="Bölmələr" id="nav"></nav></div><div class="sidebar-foot"><span class="dot"></span>Şəxsi iş sahəsi</div></aside>
 <div><header><span class="crumb">İş sahəsi / <b id="crumb">İcmal</b></span><div class="toolbar"><select id="sites" aria-label="Sayt seç"></select><button class="btn" id="add">＋ Sayt əlavə et</button></div></header><main><div id="message" class="message" role="status" aria-live="polite"></div><div id="view"><p class="muted">Panel açılır…</p></div></main></div></div>
 <dialog id="dialog"><form id="site-form" class="stack"><h2>Yeni sayt</h2><label>Saytın adı<input name="name" maxlength="90" required placeholder="Məsələn, Yemek Market"></label><label>Domen<input name="url" required placeholder="https://example.com"></label><div class="actions"><button class="btn primary">Saytı əlavə et</button><button class="btn" type="button" id="cancel">Ləğv et</button></div><p id="site-error" class="message" role="status"></p></form></dialog>
+<dialog id="publish-dialog"><div id="publish-preview"></div><div class="actions"><button class="btn primary" id="publish-confirm" hidden>GitHub-a yayımla</button><button class="btn" id="publish-close">Bağla</button></div></dialog>
 <script>
 const $=id=>document.getElementById(id);
 const sections=[["home","◫","İcmal"],["audit","◎","Texniki audit"],["pages","▤","Səhifələr"],["geo","✦","AI görünürlüyü"],["organic","↗","Üzvi axtarış"],["gap","⇆","Açar söz fərqi"],["backlinks","↪","Backlink analizi"],["content","◇","Kontent və açar sözlər"],["compare","⇄","Domen müqayisəsi"],["reports","↗","Hesabatlar"],["settings","⚙","Bağlantılar"]];
-let state, revision, active=localStorage.getItem("seo-site")||"bubora", tab="home", chosen="";
+let state, revision, connected=[], publishSelection, active=localStorage.getItem("seo-site")||"bubora", tab="home", chosen="";
 let saving=false;
 const esc=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function message(text){$("message").textContent=text}
@@ -318,7 +335,7 @@ async function api(path,method="GET",payload){
 async function setState(next){
   if(saving)throw Error("Əvvəlki dəyişiklik saxlanılır.");
   saving=true;
-  try{const data=await api("state","PUT",{state:next,revision});state=next;revision=data.revision}
+  try{const data=await api("state","PUT",{state:next,revision});state=next;revision=data.revision;connected=data.connected||[]}
   finally{saving=false}
 }
 async function changeSite(id,update){const next=structuredClone(state);update(next.sites.find(s=>s.id===id));await setState(next)}
@@ -480,7 +497,7 @@ function pages(s){
   '<div class="form-grid"><label>Meta robots<input name="directives" maxlength="200" value="'+esc(p?.directives??a?.directives??"")+'" placeholder="index, follow"></label><label>Open Graph açıqlaması<input name="ogDescription" maxlength="700" value="'+esc(p?.ogDescription??a?.ogDescription??"")+'"></label></div>'+
   '<label>hreflang alternativləri<textarea name="hreflangs" placeholder="az https://example.com/az">'+esc(p?.hreflangs??a?.hreflang?.map(([lang,url])=>lang+" "+url).join("\n")??"")+'</textarea></label>'+
   '<label>JSON-LD<textarea name="schema" placeholder="{…}">'+esc(p?.schema??a?.schema??"")+'</textarea></label>'+
-  '<div class="actions"><button class="btn primary">Qaralamanı saxla</button>'+(p?'<button type="button" class="btn" data-action="export-page">HTML ixrac et</button><button type="button" class="btn" data-action="new-page">Yeni qaralama</button>':"")+'</div></form></section>'+
+  '<div class="actions"><button class="btn primary">Qaralamanı saxla</button>'+(p?'<button type="button" class="btn" data-action="export-page">HTML ixrac et</button><button type="button" class="btn primary" data-action="publish-preview" data-draft="'+esc(p.id)+'">Yayımlamanı önizlə</button><button type="button" class="btn" data-action="new-page">Yeni qaralama</button>':"")+'</div></form></section>'+
   '<div>'+pageDiagnostics(s,selected)+'<section class="panel"><div class="panel-head"><h2>Saxlanılan qaralamalar</h2></div>'+
   (s.pages.length?s.pages.map(p=>'<div class="row"><div><h3>'+esc(p.title||p.url)+'</h3><p class="small muted">'+esc(p.url)+'</p></div><button class="btn" data-page="'+esc(p.id)+'">Aç</button></div>').join(""):empty("İlk qaralamanı saxladıqdan sonra burada görünəcək."))+'</section></div></div>';
 }
@@ -675,8 +692,8 @@ function reports(s){
   '<section class="panel"><div class="panel-head"><h2>'+esc(s.name)+'</h2><span class="pill">JSON</span></div><p class="sub">'+(s.audit?"Son audit "+date(s.audit.date):"Audit gözlənilir")+' · '+s.pages.length+' qaralama · '+s.queries.length+' GEO sorğusu</p><div class="actions"><button class="btn primary" data-action="export-report">Hesabatı endir</button>'+(s.audit?'<button class="btn" data-action="export-audit">Audit CSV</button>':"")+'</div></section>';
 }
 function settings(s){
-  const integrations=[["Google Search Console","Klik və göstərimlər","https://search.google.com/search-console"],["Google Analytics 4","Üzvi trafik və qeydiyyatlar","https://analytics.google.com"],["Bing Webmaster Tools","Microsoft axtarış və AI istinadları","https://www.bing.com/webmasters"],["GitHub","SEO dəyişikliklərinin repozitoriyaya yayımlanması",s.repo]];
-  return title("Bağlantılar","Canlı məlumat və yayımlama üçün istifadə ediləcək xidmətlər.")+'<div class="module">'+integrations.map(([name,detail,link])=>'<section class="panel"><div class="panel-head"><h2>'+name+'</h2><span class="pill warn">Qoşulmayıb</span></div><p class="muted">'+detail+'</p>'+(link?'<a class="btn" href="'+esc(link)+'" target="_blank" rel="noopener noreferrer">Xidməti aç ↗</a>':"")+'</section>').join("")+'</div>';
+  const integrations=[["Google Search Console","Klik və göstərimlər","https://search.google.com/search-console"],["Google Analytics 4","Üzvi trafik və qeydiyyatlar","https://analytics.google.com"],["Bing Webmaster Tools","Microsoft axtarış və AI istinadları","https://www.bing.com/webmasters"],["GitHub",connected.includes(s.id)?"Qaralamanı saxla, sonra Səhifələr bölməsindən yayımla.":"Serverdə bu domen üçün SEO_GITHUB_TOKEN və SEO_GITHUB_TARGETS qur.",s.repo]];
+  return title("Bağlantılar","Canlı məlumat və yayımlama üçün istifadə ediləcək xidmətlər.")+'<div class="module">'+integrations.map(([name,detail,link])=>'<section class="panel"><div class="panel-head"><h2>'+name+'</h2><span class="pill '+(name==="GitHub"&&connected.includes(s.id)?"":"warn")+'">'+(name==="GitHub"&&connected.includes(s.id)?"Qurulub":"Qoşulmayıb")+'</span></div><p class="muted">'+detail+'</p>'+(link?'<a class="btn" href="'+esc(link)+'" target="_blank" rel="noopener noreferrer">Xidməti aç ↗</a>':"")+'</section>').join("")+'</div>';
 }
 function download(name,content,type){
   const url=URL.createObjectURL(new Blob([content],{type})), a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -699,6 +716,29 @@ $("site-form").onsubmit=async e=>{
     await setState(next);select(id);form.reset();$("dialog").close();
   }catch(err){$("site-error").textContent=err.message}
   finally{submit.disabled=false}
+};
+async function previewPublish(s,pageId){
+  if(!connected.includes(s.id))throw Error("Bu domen üçün serverdə GitHub yayımlama bağlantısını qur.");
+  const result=await api("publish","POST",{siteId:s.id,pageId});
+  const preview=$("publish-preview"), confirm=$("publish-confirm");
+  publishSelection={siteId:s.id,pageId,check:result.check};
+  preview.innerHTML='<h2>GitHub önizləməsi</h2><p class="sub">'+esc(result.repo)+' · '+esc(result.branch)+' · '+esc(result.path)+'</p>'+
+    (result.fields.length?result.fields.map(field=>'<details><summary>'+esc(field.field)+'</summary><p class="small muted">Cari</p><pre>'+esc(field.before||"—")+'</pre><p class="small muted">Yeni</p><pre>'+esc(field.after)+'</pre></details>').join(""):empty("GitHub faylında bu dəyərlər artıq tətbiq olunub."));
+  confirm.hidden=!result.fields.length;
+  if(!$("publish-dialog").open)$("publish-dialog").showModal();
+}
+$("publish-close").onclick=()=>$("publish-dialog").close();
+$("publish-confirm").onclick=async()=>{
+  const button=$("publish-confirm");
+  button.disabled=true;$("publish-close").disabled=true;
+  try{
+    const result=await api("publish","POST",publishSelection);
+    button.hidden=true;
+    $("publish-preview").innerHTML=result.unchanged?empty("GitHub-da dəyişiklik tələb olunmur."):'<h2>GitHub commit yaradıldı</h2><p class="sub">Canlı sayt hosting xidməti bu branch-i deploy edəndə yenilənəcək.</p>'+(result.commit?'<a href="'+esc(result.commit)+'" target="_blank" rel="noopener noreferrer">Commit-i aç ↗</a>':"");
+  }catch(error){
+    $("publish-preview").innerHTML=empty(esc(error.message));
+    button.hidden=true;
+  }finally{button.disabled=false;$("publish-close").disabled=false}
 };
 document.addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b||!state)return;
@@ -723,6 +763,7 @@ document.addEventListener("click",e=>{
     csvDownload(s.id+"-"+searchTab+".csv",[[searchLabels[searchTab],"Klik","Göstərim","CTR","Mövqe"],...rows.map(r=>[r.label,r.clicks,r.impressions,percent(r),r.position])]);
   }
   if(d.action==="export-backlinks")csvDownload(s.id+"-backlinks.csv",[["Source URL","Target URL","Anchor"],...(s.backlinks?.items||[]).map(x=>[x.source,x.target,x.anchor])]);
+  if(d.action==="publish-preview"){message("");b.disabled=true;previewPublish(s,d.draft).catch(err=>message(err.message)).finally(()=>b.disabled=false)}
   if(d.action==="new-page"){chosen="";render()}
   if(d.action==="from-audit"){chosen="audit";navigate("pages")}
   if(d.action==="export-report")download(s.id+"-seo.json",JSON.stringify(s,null,2),"application/json");
@@ -809,6 +850,6 @@ document.addEventListener("change",e=>{
   else return;
   render();$(id)?.focus();
 });
-api("state").then(data=>{state=data.state;revision=data.revision;if(active!=="all"&&!site())active=state.sites[0].id;render()})
+api("state").then(data=>{state=data.state;revision=data.revision;connected=data.connected||[];if(active!=="all"&&!site())active=state.sites[0].id;render()})
 .catch(err=>{$("view").textContent="Panel açıla bilmədi.";message(err.message)});
 </script></body></html>`;
