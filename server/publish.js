@@ -86,6 +86,22 @@ function candidates(url,target){
   return paths.map(path=>(target.root?target.root+"/":"")+path);
 }
 
+
+function blogMarkup(post,origin){
+ const slug=String(post.slug||"");
+ if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))throw fail(400,"Bloq slug yanlışdır.");
+ const title=String(post.title||"").trim(),body=String(post.body||"").trim();
+ if(!title||!body||title.length>180||body.length>40000)throw fail(400,"Bloq məlumatlarını yoxla.");
+ const url=origin+"/"+slug+".html";
+ const inline=s=>encode(s).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\*(.+?)\*/g,"<em>$1</em>");
+ const content=body.split(/\r?\n/).map(line=>line.startsWith("### ")?"<h3>"+inline(line.slice(4))+"</h3>":line.startsWith("## ")?"<h2>"+inline(line.slice(3))+"</h2>":line.startsWith("# ")?"<h2>"+inline(line.slice(2))+"</h2>":line.trim()?"<p>"+inline(line)+"</p>":"").join("\n");
+ const description=String(post.description||"").slice(0,200);
+ const image=post.image?new URL(post.image):null;
+ if(image&&image.protocol!=="https:")throw fail(400,"Şəkil HTTPS olmalıdır.");
+ const schema=JSON.stringify({"@context":"https://schema.org","@type":"BlogPosting",headline:title,description,mainEntityOfPage:url,dateModified:post.updated,image:image?.href}).replaceAll("<","\\u003c");
+ return '<!doctype html>\n<html lang="az"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>'+encode(post.seoTitle||title)+'</title><meta name="description" content="'+encode(description)+'"><link rel="canonical" href="'+encode(url)+'"><script type="application/ld+json">'+schema+'</scr'+'ipt></head><body><main><article><h1>'+encode(title)+'</h1>'+content+'</article></main></body></html>';
+}
+
 export function createPublisher({token,targets,fetcher=fetch}){
   const mapped=new Map(Object.entries(targets));
   for(const [origin,target] of mapped){
@@ -113,6 +129,23 @@ export function createPublisher({token,targets,fetcher=fetch}){
   };
   return {
     status(origin){return Boolean(token&&mapped.has(origin))},
+    async blog({origin,post,expected}){
+      const target=mapped.get(origin);
+      if(!token||!target)throw fail(422,"Bu domen üçün GitHub yayımlama bağlantısı qurulmayıb.");
+      const html=blogMarkup(post,origin);
+      const path=(target.root?target.root+"/":"")+post.slug+".html";
+      const api="/repos/"+target.repo+"/contents/"+path.split("/").map(encodeURIComponent).join("/");
+      const existing=await request(api+"?ref="+encodeURIComponent(target.branch),{missing:true});
+      if(existing&&(existing.type!=="file"||existing.encoding!=="base64"||existing.size>750000))throw fail(422,"HTML faylı oxuna bilmir.");
+      const check=digest(JSON.stringify([origin,path,target.repo,target.branch,existing?.sha||"",html]));
+      const info={repo:target.repo,branch:target.branch,path,url:origin+"/"+post.slug+".html"};
+      if(expected===undefined)return {...info,check,exists:Boolean(existing)};
+      if(expected!==check)throw fail(409,"Məqalə və ya repo dəyişib. Yenidən önizlə.");
+      const current=existing?Buffer.from(existing.content,"base64").toString("utf8"):null;
+      if(current===html)return {...info,unchanged:true};
+      const posted=await request(api,{body:{message:"Blog: "+post.title,content:Buffer.from(html).toString("base64"),branch:target.branch,...(existing?{sha:existing.sha}:{})}});
+      return {...info,commit:posted.commit?.html_url};
+    },
     async run({origin,draft,expected}){
       const target=mapped.get(origin);
       if(!token||!target)throw fail(422,"Bu domen üçün GitHub yayımlama bağlantısı qurulmayıb.");
