@@ -265,6 +265,17 @@ export default {
         const result = await env.DB.prepare("UPDATE workspace SET data=?, revision=revision+1 WHERE id=1 AND revision=?").bind(JSON.stringify(state),revision).run();
         return result.meta.changes ? json({revision:revision+1,connected:available(state,env.PUBLISH),liveConnected:available(state,env.LIVESEO)}) : json({error:"Panel başqa pəncərədə yenilənib. Səhifəni yenilə."},409);
       }
+      if (pathname==="/api/blog-publish" && request.method==="POST") {
+        if(!env.PUBLISH)return json({error:"GitHub bağlantısı serverdə qurulmayıb."},422);
+        const {siteId,postId,check}=await request.json();
+        const row=await env.DB.prepare("SELECT data FROM workspace WHERE id = 1").first();
+        const site=(row?JSON.parse(row.data):initial).sites.find(x=>x.id===siteId);
+        const post=site?.blogs?.find(x=>x.id===postId);
+        if(!post)return json({error:"Əvvəlcə məqaləni saxla."},404);
+        if(post.status!=="ready")return json({error:"Məqalənin statusunu Yayıma hazır et."},422);
+        try{return json(await env.PUBLISH.blog({origin:new URL(site.url).origin,post,expected:check}))}
+        catch(error){return json({error:error.message},error.status||502)}
+      }
       if (pathname==="/api/publish" && request.method==="POST") {
         if(!env.PUBLISH)return json({error:"GitHub yayımlaması self-host serverində qurulur."},422);
         const {siteId,pageId,check}=await request.json();
@@ -705,7 +716,7 @@ function blog(s){
  '<label>Məqalə mətni (Markdown: #, ##, abzaslar)<textarea name="body" maxlength="40000" rows="16" required>'+val("body")+'</textarea></label>'+
  '<div class="row"><button class="btn primary">Məqaləni saxla</button><button type="button" class="btn" data-action="blog-new">Yeni qaralama</button></div></form></section>'+
  '<section class="panel"><div class="panel-head"><h2>Məqalələr ('+posts.length+')</h2></div>'+
- (posts.length?posts.map(x=>'<div class="row"><div><h3>'+esc(x.title)+'</h3><p class="muted small">/'+esc(x.slug)+'.html · '+(x.status==="ready"?"Yayıma hazır":"Qaralama")+' · '+date(x.updated)+'</p></div><div class="row"><button class="btn" data-blog-edit="'+esc(x.id)+'">Redaktə et</button><button class="btn" data-blog-export="'+esc(x.id)+'">HTML ixrac et</button><button class="btn" data-blog-delete="'+esc(x.id)+'">Sil</button></div></div>').join(""):empty("Hələ məqalə yoxdur."))+'</section>'+
+ (posts.length?posts.map(x=>'<div class="row"><div><h3>'+esc(x.title)+'</h3><p class="muted small">/'+esc(x.slug)+'.html · '+(x.status==="ready"?"Yayıma hazır":"Qaralama")+' · '+date(x.updated)+'</p></div><div class="row"><button class="btn" data-blog-edit="'+esc(x.id)+'">Redaktə et</button><button class="btn" data-blog-publish="'+esc(x.id)+'">GitHub-a yayımla</button><button class="btn" data-blog-export="'+esc(x.id)+'">HTML ixrac et</button><button class="btn" data-blog-delete="'+esc(x.id)+'">Sil</button></div></div>').join(""):empty("Hələ məqalə yoxdur."))+'</section>'+
  '<p class="sub small">HTML ixracı canlı saytda yayımlama deyil. Faylı saytın repozitoriyasına əlavə edib deploy etmək lazımdır.</p>';
 }
 function blogHtml(p,s){
@@ -777,6 +788,7 @@ document.addEventListener("click",e=>{
   if(d.tab)navigate(d.tab);
   if(d.action==="blog-new"){editingBlog="";render()}
   if(d.blogEdit){editingBlog=d.blogEdit;render()}
+  if(d.blogPublish){const p=site()?.blogs?.find(x=>x.id===d.blogPublish);if(p){if(!connected.includes(site().id)){message("Bu sayt üçün SEO_GITHUB_TOKEN və SEO_GITHUB_TARGETS bağlantısı qurulmayıb.");return}if(p.status!=="ready"){message("Əvvəlcə statusu Yayıma hazır et.");return}b.disabled=true;api("blog-publish","POST",{siteId:site().id,postId:p.id}).then(preview=>{if(!confirm("GitHub-a yayımlansın?\nRepo: "+preview.repo+"\nFayl: "+preview.path+"\n"+(preview.exists?"Mövcud fayl yenilənəcək.":"Yeni fayl yaradılacaq.")))return;return api("blog-publish","POST",{siteId:site().id,postId:p.id,check:preview.check}).then(result=>{message(result.unchanged?"Fayl artıq aktualdır.":"GitHub commit yaradıldı. Hosting deploy-u tamamlandıqdan sonra sayt yenilənəcək.");if(result.commit)window.open(result.commit,"_blank","noopener")})}).catch(err=>message(err.message)).finally(()=>b.disabled=false)}}
   if(d.blogExport){const p=site()?.blogs?.find(x=>x.id===d.blogExport);if(p)download(p.slug+".html",blogHtml(p,site()),"text/html;charset=utf-8")}
   if(d.blogDelete){const p=site()?.blogs?.find(x=>x.id===d.blogDelete);if(p&&confirm("Bu məqaləni silmək istəyirsən?")){changeSite(site().id,x=>{x.blogs=x.blogs.filter(v=>v.id!==p.id)}).then(()=>{editingBlog="";render();message("Məqalə silindi.")}).catch(err=>message(err.message))}}
   if(d.site)select(d.site);
