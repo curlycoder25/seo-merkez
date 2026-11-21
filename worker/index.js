@@ -317,9 +317,9 @@ header{height:66px;border-bottom:1px solid var(--border);display:flex;align-item
 <dialog id="publish-dialog"><div id="publish-preview"></div><div class="actions"><button class="btn primary" id="publish-confirm" hidden>GitHub-a yayımla</button><button class="btn" id="publish-close">Bağla</button></div></dialog>
 <script>
 const $=id=>document.getElementById(id);
-const sections=[["home","◫","İcmal"],["audit","◎","Texniki audit"],["pages","▤","Səhifələr"],["geo","✦","AI görünürlüyü"],["organic","↗","Üzvi axtarış"],["gap","⇆","Açar söz fərqi"],["backlinks","↪","Backlink analizi"],["content","◇","Kontent və açar sözlər"],["compare","⇄","Domen müqayisəsi"],["reports","↗","Hesabatlar"],["settings","⚙","Bağlantılar"]];
+const sections=[["home","◫","İcmal"],["audit","◎","Texniki audit"],["pages","▤","Səhifələr"],["geo","✦","AI görünürlüyü"],["organic","↗","Üzvi axtarış"],["gap","⇆","Açar söz fərqi"],["backlinks","↪","Backlink analizi"],["content","◇","Kontent və açar sözlər"],["blog","▣","Bloq idarəetməsi"],["compare","⇄","Domen müqayisəsi"],["reports","↗","Hesabatlar"],["settings","⚙","Bağlantılar"]];
 let state, revision, connected=[], liveConnected=[], publishSelection, active=localStorage.getItem("seo-site")||"bubora", tab="home", chosen="";
-let saving=false;
+let saving=false, editingBlog="";
 const esc=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function message(text){$("message").textContent=text}
 function pageUrl(value,base){const u=new URL(value,base);if(u.protocol!=="https:"||u.username||u.password)throw Error("HTTPS ünvanı daxil et.");u.hash="";return u}
@@ -343,11 +343,11 @@ function render(){
   if(!state)return;
   $("sites").innerHTML='<option value="all">Bütün saytlar</option>'+state.sites.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>').join("");
   $("sites").value=active;
-  $("nav").innerHTML=[["Layihə",["home","audit","pages","geo"]],["Araşdırma",["organic","gap","backlinks","content","compare"]],["İdarəetmə",["reports","settings"]]].map(([group,ids])=>'<div class="nav-group"><p class="nav-title">'+group+'</p>'+sections.filter(section=>ids.includes(section[0])).map(([id,icon,label])=>'<button type="button" data-tab="'+id+'" '+(tab===id?'aria-current="page"':'')+'><span class="icon" aria-hidden="true">'+icon+'</span>'+label+'</button>').join("")+'</div>').join("");
+  $("nav").innerHTML=[["Layihə",["home","audit","pages","geo"]],["Araşdırma",["organic","gap","backlinks","content","blog","compare"]],["İdarəetmə",["reports","settings"]]].map(([group,ids])=>'<div class="nav-group"><p class="nav-title">'+group+'</p>'+sections.filter(section=>ids.includes(section[0])).map(([id,icon,label])=>'<button type="button" data-tab="'+id+'" '+(tab===id?'aria-current="page"':'')+'><span class="icon" aria-hidden="true">'+icon+'</span>'+label+'</button>').join("")+'</div>').join("");
   $("crumb").textContent=sections.find(s=>s[0]===tab)[2];
   const s=site();
   if(!s){$("view").innerHTML=title("Bütün saytlar","Auditlərə, SEO qaralamalarına və AI sorğularına ümumi baxış.")+'<div class="module">'+state.sites.map(x=>'<article class="panel"><h2>'+esc(x.name)+'</h2><p class="muted">'+esc(x.url)+'</p><p>'+x.pages.length+' SEO qaralaması · '+x.queries.length+' GEO sorğusu</p><p class="muted">'+(x.audit?'Son audit '+date(x.audit.date):'Audit gözlənilir')+'</p><button class="btn" data-site="'+esc(x.id)+'">İş sahəsini aç →</button></article>').join("")+'</div>';return}
-  $("view").innerHTML=({home,audit:audits,pages,geo,organic,gap:keywordGap,backlinks,content,compare:comparison,reports,settings})[tab](s);
+  $("view").innerHTML=({home,audit:audits,pages,geo,organic,gap:keywordGap,backlinks,content,blog,compare:comparison,reports,settings})[tab](s);
 }
 function home(s){
   const ok=s.audit?.checks.filter(c=>c[1]).length;
@@ -687,6 +687,36 @@ function content(s){
   '<section class="panel"><form id="content-form" class="stack"><div class="form-grid"><label>Açar söz və ya mövzu<input name="keyword" required maxlength="200" value="'+esc(plannedKeyword.slice(0,200))+'"></label><label>Dil<select name="language"><option>Azərbaycan dili</option><option>Türkcə</option><option>İngiliscə</option></select></label></div><label>Hədəf səhifə<input name="target" placeholder="/blog/…"></label><label>Kontent qeydi<textarea name="brief" maxlength="3000"></textarea></label><div><button class="btn primary">Plana əlavə et</button></div></form></section>'+
   '<section class="panel"><div class="panel-head"><h2>Kontent planı</h2></div>'+(s.notes.length?s.notes.map(n=>'<div class="row"><div><h3>'+esc(n.keyword)+'</h3><p class="muted small">'+esc(n.language)+(n.target?' · '+esc(n.target):'')+'</p><p>'+esc(n.brief)+'</p></div></div>').join(""):empty("Kontent mövzuları burada görünəcək."))+'</section>';
 }
+
+function blog(s){
+ const posts=s.blogs||[];
+ const p=posts.find(x=>x.id===editingBlog)||{};
+ const val=(k)=>esc(p[k]||"");
+ return title("Bloq idarəetməsi","Məqalə yaz, SEO məlumatlarını hazırla, qaralama saxla və HTML faylı ixrac et.")+
+ '<section class="panel"><div class="panel-head"><h2>'+(p.id?"Məqaləni redaktə et":"Yeni məqalə")+'</h2></div>'+
+ '<form id="blog-form" class="stack"><div class="form-grid">'+
+ '<label>Məqalə başlığı<input name="title" maxlength="180" required value="'+val("title")+'"></label>'+
+ '<label>URL slug<input name="slug" maxlength="140" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="onlayn-tedris-platformasi" required value="'+val("slug")+'"></label>'+
+ '<label>Əsas açar söz<input name="keyword" maxlength="160" value="'+val("keyword")+'"></label>'+
+ '<label>Status<select name="status"><option value="draft" '+(p.status!=="ready"?"selected":"")+'>Qaralama</option><option value="ready" '+(p.status==="ready"?"selected":"")+'>Yayıma hazır</option></select></label>'+
+ '<label>SEO başlığı<input name="seoTitle" maxlength="80" value="'+val("seoTitle")+'"></label>'+
+ '<label>Şəkil URL-i (HTTPS)<input name="image" maxlength="600" placeholder="https://..." value="'+val("image")+'"></label></div>'+
+ '<label>Meta description<textarea name="description" maxlength="200" rows="2">'+val("description")+'</textarea></label>'+
+ '<label>Məqalə mətni (Markdown: #, ##, abzaslar)<textarea name="body" maxlength="40000" rows="16" required>'+val("body")+'</textarea></label>'+
+ '<div class="row"><button class="btn primary">Məqaləni saxla</button><button type="button" class="btn" data-action="blog-new">Yeni qaralama</button></div></form></section>'+
+ '<section class="panel"><div class="panel-head"><h2>Məqalələr ('+posts.length+')</h2></div>'+
+ (posts.length?posts.map(x=>'<div class="row"><div><h3>'+esc(x.title)+'</h3><p class="muted small">/'+esc(x.slug)+'.html · '+(x.status==="ready"?"Yayıma hazır":"Qaralama")+' · '+date(x.updated)+'</p></div><div class="row"><button class="btn" data-blog-edit="'+esc(x.id)+'">Redaktə et</button><button class="btn" data-blog-export="'+esc(x.id)+'">HTML ixrac et</button><button class="btn" data-blog-delete="'+esc(x.id)+'">Sil</button></div></div>').join(""):empty("Hələ məqalə yoxdur."))+'</section>'+
+ '<p class="sub small">HTML ixracı canlı saytda yayımlama deyil. Faylı saytın repozitoriyasına əlavə edib deploy etmək lazımdır.</p>';
+}
+function blogHtml(p,s){
+ const e=esc;
+ const inline=t=>e(t).replace(/\\*\\*(.+?)\\*\\*/g,"<strong>$1</strong>").replace(/\\*(.+?)\\*/g,"<em>$1</em>");
+ const body=p.body.split(/\\r?\\n/).map(line=>line.startsWith("### ")?"<h3>"+inline(line.slice(4))+"</h3>":line.startsWith("## ")?"<h2>"+inline(line.slice(3))+"</h2>":line.startsWith("# ")?"<h2>"+inline(line.slice(2))+"</h2>":line.trim()?"<p>"+inline(line)+"</p>":"").join("\\n");
+ const url=new URL("/"+p.slug+".html",s.url).href;
+ const schema=JSON.stringify({"@context":"https://schema.org","@type":"BlogPosting",headline:p.title,description:p.description||"",mainEntityOfPage:url,image:p.image||undefined,dateModified:p.updated}).replace(/</g,"\\u003c");
+ return '<!doctype html>\\n<html lang="az"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>'+e(p.seoTitle||p.title)+'</title><meta name="description" content="'+e(p.description)+'"><link rel="canonical" href="'+e(url)+'"><meta property="og:title" content="'+e(p.seoTitle||p.title)+'"><meta property="og:description" content="'+e(p.description)+'">'+(p.image?'<meta property="og:image" content="'+e(p.image)+'">':'')+'<script type="application/ld+json">'+schema+'</scr'+'ipt></head><body><main><article><h1>'+e(p.title)+'</h1>'+body+'</article></main></body></html>';
+}
+
 function reports(s){
   return title("Hesabatlar","Sayt üzrə son audit, SEO qaralamaları, GEO qeydləri və kontent planını ixrac et.")+
   '<section class="panel"><div class="panel-head"><h2>'+esc(s.name)+'</h2><span class="pill">JSON</span></div><p class="sub">'+(s.audit?"Son audit "+date(s.audit.date):"Audit gözlənilir")+' · '+s.pages.length+' qaralama · '+s.queries.length+' GEO sorğusu</p><div class="actions"><button class="btn primary" data-action="export-report">Hesabatı endir</button>'+(s.audit?'<button class="btn" data-action="export-audit">Audit CSV</button>':"")+'</div></section>';
@@ -745,6 +775,10 @@ document.addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b||!state)return;
   const d=b.dataset;
   if(d.tab)navigate(d.tab);
+  if(d.action==="blog-new"){editingBlog="";render()}
+  if(d.blogEdit){editingBlog=d.blogEdit;render()}
+  if(d.blogExport){const p=site()?.blogs?.find(x=>x.id===d.blogExport);if(p)download(p.slug+".html",blogHtml(p,site()),"text/html;charset=utf-8")}
+  if(d.blogDelete){const p=site()?.blogs?.find(x=>x.id===d.blogDelete);if(p&&confirm("Bu məqaləni silmək istəyirsən?")){changeSite(site().id,x=>{x.blogs=x.blogs.filter(v=>v.id!==p.id)}).then(()=>{editingBlog="";render();message("Məqalə silindi.")}).catch(err=>message(err.message))}}
   if(d.site)select(d.site);
   if(d.page){chosen=d.page;render()}
   const s=site();if(!s)return;
@@ -785,6 +819,15 @@ document.addEventListener("submit",async e=>{
   e.preventDefault();message("");
   const button=e.submitter, f=Object.fromEntries(new FormData(form));if(button)button.disabled=true;
   try{
+    if(form.id==="blog-form"){
+      const title=f.title.trim(),slug=f.slug.trim().toLowerCase(),body=f.body.trim();
+      if(!title||!body||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))throw Error("Başlıq, mətn və düzgün slug daxil et.");
+      if(f.image){const u=pageUrl(f.image);f.image=u.href}
+      if((s.blogs||[]).some(p=>p.slug===slug&&p.id!==editingBlog))throw Error("Bu URL slug artıq mövcuddur.");
+      const id=editingBlog||crypto.randomUUID(),record={...f,title,slug,body,id,updated:new Date().toISOString()};
+      await changeSite(s.id,item=>{item.blogs??=[];item.blogs=[record,...item.blogs.filter(p=>p.id!==id)]});
+      editingBlog=id;render();message("Məqalə saxlanıldı.");return;
+    }
     if(form.id==="search-filter"){searchFilter=f.filter;searchSort=f.sort;searchLimit=30;render();return}
     if(form.id==="backlink-filter"){backlinkFilter=f.filter;render();return}
     if(form.id==="search-import"){
