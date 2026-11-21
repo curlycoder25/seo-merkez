@@ -710,11 +710,11 @@ function blog(s){
 }
 function blogHtml(p,s){
  const e=esc;
- const inline=t=>e(t).replace(/\\*\\*(.+?)\\*\\*/g,"<strong>$1</strong>").replace(/\\*(.+?)\\*/g,"<em>$1</em>");
- const body=p.body.split(/\\r?\\n/).map(line=>line.startsWith("### ")?"<h3>"+inline(line.slice(4))+"</h3>":line.startsWith("## ")?"<h2>"+inline(line.slice(3))+"</h2>":line.startsWith("# ")?"<h2>"+inline(line.slice(2))+"</h2>":line.trim()?"<p>"+inline(line)+"</p>":"").join("\\n");
+ const inline=t=>e(t).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\*(.+?)\*/g,"<em>$1</em>");
+ const body=p.body.split(/\r?\n/).map(line=>line.startsWith("### ")?"<h3>"+inline(line.slice(4))+"</h3>":line.startsWith("## ")?"<h2>"+inline(line.slice(3))+"</h2>":line.startsWith("# ")?"<h2>"+inline(line.slice(2))+"</h2>":line.trim()?"<p>"+inline(line)+"</p>":"").join("\n");
  const url=new URL("/"+p.slug+".html",s.url).href;
- const schema=JSON.stringify({"@context":"https://schema.org","@type":"BlogPosting",headline:p.title,description:p.description||"",mainEntityOfPage:url,image:p.image||undefined,dateModified:p.updated}).replace(/</g,"\\u003c");
- return '<!doctype html>\\n<html lang="az"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>'+e(p.seoTitle||p.title)+'</title><meta name="description" content="'+e(p.description)+'"><link rel="canonical" href="'+e(url)+'"><meta property="og:title" content="'+e(p.seoTitle||p.title)+'"><meta property="og:description" content="'+e(p.description)+'">'+(p.image?'<meta property="og:image" content="'+e(p.image)+'">':'')+'<script type="application/ld+json">'+schema+'</scr'+'ipt></head><body><main><article><h1>'+e(p.title)+'</h1>'+body+'</article></main></body></html>';
+ const schema=JSON.stringify({"@context":"https://schema.org","@type":"BlogPosting",headline:p.title,description:p.description||"",mainEntityOfPage:url,image:p.image||undefined,dateModified:p.updated}).replace(/</g,"\u003c");
+ return '<!doctype html>\n<html lang="az"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>'+e(p.seoTitle||p.title)+'</title><meta name="description" content="'+e(p.description)+'"><link rel="canonical" href="'+e(url)+'"><meta property="og:title" content="'+e(p.seoTitle||p.title)+'"><meta property="og:description" content="'+e(p.description)+'">'+(p.image?'<meta property="og:image" content="'+e(p.image)+'">':'')+'<script type="application/ld+json">'+schema+'</scr'+'ipt></head><body><main><article><h1>'+e(p.title)+'</h1>'+body+'</article></main></body></html>';
 }
 
 function reports(s){
