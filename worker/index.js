@@ -265,6 +265,22 @@ export default {
         const result = await env.DB.prepare("UPDATE workspace SET data=?, revision=revision+1 WHERE id=1 AND revision=?").bind(JSON.stringify(state),revision).run();
         return result.meta.changes ? json({revision:revision+1,connected:available(state,env.PUBLISH),liveConnected:available(state,env.LIVESEO)}) : json({error:"Panel başqa pəncərədə yenilənib. Səhifəni yenilə."},409);
       }
+
+      if(pathname==="/api/integration-status"&&request.method==="GET")return json(env.INTEGRATIONS?.status()||{});
+      if(pathname==="/api/gsc"&&request.method==="POST"){
+        const {siteId}=await request.json();
+        const row=await env.DB.prepare("SELECT data FROM workspace WHERE id=1").first();
+        const site=(row?JSON.parse(row.data):initial).sites.find(x=>x.id===siteId);
+        if(!site)return json({error:"Sayt tapılmadı."},404);
+        try{return json(await env.INTEGRATIONS.gsc(site.gscProperty||new URL(site.url).origin+"/"))}
+        catch(error){return json({error:error.message},422)}
+      }
+      if(pathname==="/api/ai-article"&&request.method==="POST"){
+        const {topic,keyword,language}=await request.json();
+        if(typeof topic!=="string"||!topic.trim()||typeof keyword!=="string"||topic.length>200||keyword.length>160)return json({error:"Mövzu və açar söz düzgün deyil."},400);
+        try{return json(await env.INTEGRATIONS.article(topic,keyword,language))}
+        catch(error){return json({error:error.message},422)}
+      }
       if (pathname==="/api/blog-publish" && request.method==="POST") {
         if(!env.PUBLISH)return json({error:"GitHub bağlantısı serverdə qurulmayıb."},422);
         const {siteId,postId,check}=await request.json();
@@ -726,6 +742,7 @@ function blog(s){
  const quality=p.id?blogChecks(p,s):null;
  const suggestions=posts.filter(x=>x.id!==p.id&&x.status==="ready").slice(0,5);
  return title("Bloq idarəetməsi","Məqalə yaz, SEO məlumatlarını hazırla, qaralama saxla və HTML faylı ixrac et.")+
+ '<section class="panel"><h2>AI məqalə generatoru</h2><p class="sub small">API açarı serverdə aktivdirsə, qaralama yaradır; avtomatik yayımlamır.</p><form id="ai-form" class="stack"><div class="form-grid"><label>Mövzu<input name="topic" maxlength="200" required placeholder="Onlayn tədris platforması nədir?"></label><label>Əsas açar söz<input name="keyword" maxlength="160" placeholder="onlayn tədris platforması"></label><label>Dil<select name="language"><option>Azərbaycan dili</option><option>Türkcə</option><option>İngiliscə</option></select></label></div><button class="btn primary">AI qaralama yarat</button></form></section>'+
  '<section class="panel"><div class="panel-head"><h2>'+(p.id?"Məqaləni redaktə et":"Yeni məqalə")+'</h2></div>'+
  '<form id="blog-form" class="stack"><div class="form-grid">'+
  '<label>Məqalə başlığı<input name="title" maxlength="180" required value="'+val("title")+'"></label>'+
@@ -758,6 +775,7 @@ function reports(s){
 function settings(s){
   const integrations=[["Google Search Console","Klik və göstərimlər","https://search.google.com/search-console"],["Google Analytics 4","Üzvi trafik və qeydiyyatlar","https://analytics.google.com"],["Bing Webmaster Tools","Microsoft axtarış və AI istinadları","https://www.bing.com/webmasters"],["GitHub",connected.includes(s.id)?"Qaralamanı saxla, sonra Səhifələr bölməsindən yayımla.":"Serverdə bu domen üçün SEO_GITHUB_TOKEN və SEO_GITHUB_TARGETS qur.",s.repo]];
   return title("Bağlantılar","Canlı məlumat və yayımlama üçün istifadə ediləcək xidmətlər.")+
+ '<section class="panel"><h2>Search Console — API</h2><p class="sub small">Google service account e-mailini Search Console mülkiyyətinə əlavə et. Son 28 günlük açar söz göstəricilərini çək.</p><form id="gsc-form" class="stack"><label>Search Console property (URL prefix və ya sc-domain:...)<input name="property" value="'+esc(s.gscProperty||new URL(s.url).origin+"/")+'" required maxlength="250"></label><button class="btn primary">GSC məlumatlarını gətir</button></form>'+(s.gscSnapshot?'<p class="small">Son sinxronizasiya: '+date(s.gscSnapshot.updated)+' · '+s.gscSnapshot.rows.length+' açar söz</p><div class="table-scroll"><table><thead><tr><th>Açar söz</th><th>Klik</th><th>Göstərim</th><th>Mövqe</th></tr></thead><tbody>'+s.gscSnapshot.rows.slice(0,30).map(x=>'<tr><td>'+esc(x.keyword)+'</td><td>'+x.clicks+'</td><td>'+x.impressions+'</td><td>'+Number(x.position).toFixed(1)+'</td></tr>').join("")+'</tbody></table></div>':"")+'</section>'+
   '<section class="panel"><div class="panel-head"><h2>Canlı SEO</h2><span class="pill '+(liveConnected.includes(s.id)?"":"warn")+'">'+(liveConnected.includes(s.id)?"Paneldə aktivdir":"Qoşulmayıb")+'</span></div><p class="sub">Başlıq və meta açıqlamasını tətbiq etmək üçün serverdə domeni SEO_LIVE_TARGETS ilə qoş və sayt inteqrasiyasını işə sal.</p></section>'+'<div class="module">'+integrations.map(([name,detail,link])=>'<section class="panel"><div class="panel-head"><h2>'+name+'</h2><span class="pill '+(name==="GitHub"&&connected.includes(s.id)?"":"warn")+'">'+(name==="GitHub"&&connected.includes(s.id)?"Qurulub":"Qoşulmayıb")+'</span></div><p class="muted">'+detail+'</p>'+(link?'<a class="btn" href="'+esc(link)+'" target="_blank" rel="noopener noreferrer">Xidməti aç ↗</a>':"")+'</section>').join("")+'</div>';
 }
 function download(name,content,type){
@@ -855,6 +873,20 @@ document.addEventListener("submit",async e=>{
   e.preventDefault();message("");
   const button=e.submitter, f=Object.fromEntries(new FormData(form));if(button)button.disabled=true;
   try{
+    if(form.id==="gsc-form"){
+      const property=f.property.trim();
+      if(!property.startsWith("sc-domain:")&&!property.startsWith("https://"))throw Error("GSC property URL və ya sc-domain: formatında olmalıdır.");
+      await changeSite(s.id,item=>item.gscProperty=property);
+      const result=await api("gsc","POST",{siteId:s.id});
+      await changeSite(s.id,item=>item.gscSnapshot={...result,updated:new Date().toISOString()});
+      render();message("Search Console məlumatları yeniləndi.");return;
+    }
+    if(form.id==="ai-form"){
+      const article=await api("ai-article","POST",{topic:f.topic,keyword:f.keyword,language:f.language});
+      const id=crypto.randomUUID();
+      await changeSite(s.id,item=>{item.blogs??=[];item.blogs.unshift({...article,id,updated:new Date().toISOString()})});
+      editingBlog=id;render();message("AI qaralama yaradıldı. Məlumatları yoxlayıb redaktə et.");return;
+    }
     if(form.id==="blog-form"){
       const title=f.title.trim(),slug=f.slug.trim().toLowerCase(),body=f.body.trim();
       if(!title||!body||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))throw Error("Başlıq, mətn və düzgün slug daxil et.");
