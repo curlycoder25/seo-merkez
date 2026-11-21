@@ -11,6 +11,7 @@ import ipaddr from "ipaddr.js";
 import app from "../worker/index.js";
 import { createLiveSeo } from "./live-seo.js";
 import { createPublisher } from "./publish.js";
+import { createIntegrations } from "./integrations.js";
 
 const {SEO_PUBLIC_URL,SEO_ADMIN_PASSWORD,SEO_ADMIN_USER="admin",SEO_BIND="127.0.0.1",PORT=8787}=process.env;
 if (!SEO_PUBLIC_URL || !SEO_ADMIN_PASSWORD || SEO_ADMIN_PASSWORD.length<16) {
@@ -54,6 +55,7 @@ const DB={
   }
 };
 const PUBLISH=createPublisher({token:process.env.SEO_GITHUB_TOKEN,targets:JSON.parse(process.env.SEO_GITHUB_TARGETS||"{}")});
+const integrations=createIntegrations(process.env,sqlite);
 const liveSeo=createLiveSeo(JSON.parse(process.env.SEO_LIVE_TARGETS||"{}"),sqlite);
 const server=createServer({requestTimeout:30000},async (req,res)=>{
   res.setHeader("Cache-Control","no-store");
@@ -86,7 +88,7 @@ const server=createServer({requestTimeout:30000},async (req,res)=>{
       }
       body=Buffer.concat(parts);
     }
-    const response=await app.fetch(new Request(url,{method:req.method,headers,body}),{DB,PUBLISH,LIVESEO:liveSeo});
+    const response=await app.fetch(new Request(url,{method:req.method,headers,body}),{DB,PUBLISH,LIVESEO:liveSeo,INTEGRATIONS:integrations});
     res.writeHead(response.status,Object.fromEntries(response.headers));
     if(response.body)await pipeline(Readable.fromWeb(response.body),res);
     else res.end();
