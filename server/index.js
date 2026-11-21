@@ -97,4 +97,30 @@ const server=createServer({requestTimeout:30000},async (req,res)=>{
     else res.destroy();
   }
 });
+
+if(process.env.SEO_AUTO_AUDIT_ENABLED==="true"){
+ const hours=Math.max(6,Math.min(168,Number(process.env.SEO_AUTO_AUDIT_HOURS)||24));
+ async function runAutoAudits(){
+  const row=sqlite.prepare("SELECT data,revision FROM workspace WHERE id=1").get();
+  if(!row)return;
+  const state=JSON.parse(row.data);
+  for(const site of state.sites.slice(0,20)){
+   if(site.autoAudit===false)continue;
+   if(site.autoAuditAt&&Date.now()-Date.parse(site.autoAuditAt)<hours*3600000)continue;
+   try{
+    const response=await app.fetch(new Request(publicUrl.origin+"/api/audit",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({url:site.url})}),{DB,PUBLISH,LIVESEO:liveSeo,INTEGRATIONS:integrations});
+    if(!response.ok)continue;
+    const result=await response.json();
+    const current=sqlite.prepare("SELECT data,revision FROM workspace WHERE id=1").get();
+    const next=JSON.parse(current.data),target=next.sites.find(x=>x.id===site.id);
+    if(!target)continue;
+    target.audit=result;target.autoAuditAt=new Date().toISOString();
+    sqlite.prepare("UPDATE workspace SET data=?,revision=revision+1 WHERE id=1 AND revision=?").run(JSON.stringify(next),current.revision);
+   }catch(error){console.error("SEO auto audit:",error.message)}
+  }
+ }
+ setTimeout(()=>runAutoAudits().catch(console.error),30000).unref();
+ setInterval(()=>runAutoAudits().catch(console.error),hours*3600000).unref();
+}
+
 server.listen(Number(PORT),SEO_BIND,()=>console.log("SEO Mərkəzi "+SEO_BIND+":"+PORT));
