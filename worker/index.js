@@ -699,10 +699,32 @@ function content(s){
   '<section class="panel"><div class="panel-head"><h2>Kontent planı</h2></div>'+(s.notes.length?s.notes.map(n=>'<div class="row"><div><h3>'+esc(n.keyword)+'</h3><p class="muted small">'+esc(n.language)+(n.target?' · '+esc(n.target):'')+'</p><p>'+esc(n.brief)+'</p></div></div>').join(""):empty("Kontent mövzuları burada görünəcək."))+'</section>';
 }
 
+
+function blogChecks(p,s){
+ const words=(p.body||"").trim().split(/\s+/).filter(Boolean).length;
+ const checks=[
+ ["SEO başlığı 30–65 simvol",(p.seoTitle||p.title||"").length>=30&&(p.seoTitle||p.title||"").length<=65],
+ ["Meta description 110–160 simvol",(p.description||"").length>=110&&(p.description||"").length<=160],
+ ["Əsas açar söz başlıqda",!!p.keyword&&(p.title||"").toLocaleLowerCase("az").includes(p.keyword.toLocaleLowerCase("az"))],
+ ["Məqalə ən azı 300 söz",words>=300],
+ ["H2 alt başlığı",/^## /m.test(p.body||"")],
+ ["Sosial paylaşım şəkli",!!p.image],
+ ["Daxili link",/\]\(\/[^)]+\)/.test(p.body||"")||/\]\(https:\/\/[^)]+\)/.test(p.body||"")]
+ ];
+ return {checks,score:Math.round(checks.filter(x=>x[1]).length/checks.length*100),words};
+}
+function blogSitemap(s){
+ const base=new URL(s.url).origin;
+ const urls=[...new Set((s.blogs||[]).filter(p=>p.status==="ready").map(p=>base+"/"+p.slug+".html"))];
+ return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'+urls.map(url=>'  <url><loc>'+esc(url)+'</loc></url>').join("\n")+'\n</urlset>\n';
+}
+
 function blog(s){
  const posts=s.blogs||[];
  const p=posts.find(x=>x.id===editingBlog)||{};
  const val=(k)=>esc(p[k]||"");
+ const quality=p.id?blogChecks(p,s):null;
+ const suggestions=posts.filter(x=>x.id!==p.id&&x.status==="ready").slice(0,5);
  return title("Bloq idarəetməsi","Məqalə yaz, SEO məlumatlarını hazırla, qaralama saxla və HTML faylı ixrac et.")+
  '<section class="panel"><div class="panel-head"><h2>'+(p.id?"Məqaləni redaktə et":"Yeni məqalə")+'</h2></div>'+
  '<form id="blog-form" class="stack"><div class="form-grid">'+
@@ -715,7 +737,8 @@ function blog(s){
  '<label>Meta description<textarea name="description" maxlength="200" rows="2">'+val("description")+'</textarea></label>'+
  '<label>Məqalə mətni (Markdown: #, ##, abzaslar)<textarea name="body" maxlength="40000" rows="16" required>'+val("body")+'</textarea></label>'+
  '<div class="row"><button class="btn primary">Məqaləni saxla</button><button type="button" class="btn" data-action="blog-new">Yeni qaralama</button></div></form></section>'+
- '<section class="panel"><div class="panel-head"><h2>Məqalələr ('+posts.length+')</h2></div>'+
+ '<section class="panel"><div class="panel-head"><h2>SEO yoxlaması və daxili linklər</h2></div>'+(quality?'<p><strong>SEO yoxlama nəticəsi: '+quality.score+'/100</strong> · '+quality.words+' söz</p>'+quality.checks.map(x=>'<p class="small">'+(x[1]?'✓ ':'○ ')+esc(x[0])+'</p>').join(""):'<p class="sub">Məqaləni saxladıqdan sonra SEO yoxlamaları görünəcək.</p>')+'<h3>Daxili link təklifləri</h3>'+(suggestions.length?suggestions.map(x=>'<p class="small"><code>['+esc(x.title)+'](/'+esc(x.slug)+'.html)</code></p>').join(""):'<p class="sub small">Yayıma hazır digər məqalələr olduqda linklər burada görünəcək.</p>')+'</section>'+
+ '<section class="panel"><div class="panel-head"><h2>Məqalələr ('+posts.length+')</h2><button class="btn" data-action="blog-sitemap">Bloq sitemap XML</button></div>'+
  (posts.length?posts.map(x=>'<div class="row"><div><h3>'+esc(x.title)+'</h3><p class="muted small">/'+esc(x.slug)+'.html · '+(x.status==="ready"?"Yayıma hazır":"Qaralama")+' · '+date(x.updated)+'</p></div><div class="row"><button class="btn" data-blog-edit="'+esc(x.id)+'">Redaktə et</button><button class="btn" data-blog-publish="'+esc(x.id)+'">GitHub-a yayımla</button><button class="btn" data-blog-export="'+esc(x.id)+'">HTML ixrac et</button><button class="btn" data-blog-delete="'+esc(x.id)+'">Sil</button></div></div>').join(""):empty("Hələ məqalə yoxdur."))+'</section>'+
  '<p class="sub small">HTML ixracı canlı saytda yayımlama deyil. Faylı saytın repozitoriyasına əlavə edib deploy etmək lazımdır.</p>';
 }
@@ -786,6 +809,7 @@ document.addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b||!state)return;
   const d=b.dataset;
   if(d.tab)navigate(d.tab);
+  if(d.action==="blog-sitemap"){download(site().id+"-blog-sitemap.xml",blogSitemap(site()),"application/xml;charset=utf-8")}
   if(d.action==="blog-new"){editingBlog="";render()}
   if(d.blogEdit){editingBlog=d.blogEdit;render()}
   if(d.blogPublish){const p=site()?.blogs?.find(x=>x.id===d.blogPublish);if(p){if(!connected.includes(site().id)){message("Bu sayt üçün SEO_GITHUB_TOKEN və SEO_GITHUB_TARGETS bağlantısı qurulmayıb.");return}if(p.status!=="ready"){message("Əvvəlcə statusu Yayıma hazır et.");return}b.disabled=true;api("blog-publish","POST",{siteId:site().id,postId:p.id}).then(preview=>{if(!confirm("GitHub-a yayımlansın?\nRepo: "+preview.repo+"\nFayl: "+preview.path+"\n"+(preview.exists?"Mövcud fayl yenilənəcək.":"Yeni fayl yaradılacaq.")))return;return api("blog-publish","POST",{siteId:site().id,postId:p.id,check:preview.check}).then(result=>{message(result.unchanged?"Fayl artıq aktualdır.":"GitHub commit yaradıldı. Hosting deploy-u tamamlandıqdan sonra sayt yenilənəcək.");if(result.commit)window.open(result.commit,"_blank","noopener")})}).catch(err=>message(err.message)).finally(()=>b.disabled=false)}}
